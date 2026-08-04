@@ -3,9 +3,10 @@ import { useTendas } from "@/lib/tendas-store";
 
 export function WhatsAppFab() {
   const { whatsapp } = useTendas();
-  const href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(
+  const href = `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
     "Olá! Vim pelo site e gostaria de um orçamento de tendas.",
   )}`;
+
 
   return (
     <a

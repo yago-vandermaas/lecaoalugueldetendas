@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { brl, diffDias, type Rental } from "@/lib/tendas-data";
 import { useTendas } from "@/lib/tendas-store";
+import { openWhatsApp } from "@/lib/whatsapp";
+
 
 type Form = { nome: string; telefone: string; local: string; inicio: string; fim: string };
 const vazio: Form = { nome: "", telefone: "", local: "", inicio: "", fim: "" };
@@ -74,12 +76,12 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
       ),
       "",
       `*Valor total estimado:* ${brl(total)}`,
+      "",
+      "_Obs.: o valor do frete/entrega é calculado à parte, conforme o local do evento._",
     ];
 
-    window.open(
-      `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`,
-      "_blank",
-    );
+    openWhatsApp(whatsapp, linhas.join("\n"));
+
     clearCart();
     setForm(vazio);
     onOpenChange(false);
