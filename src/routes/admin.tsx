@@ -16,7 +16,17 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SiteHeader } from "@/components/SiteHeader";
-import { brl, STATUS_LABEL, TENT_TYPES, type Tent, type TentStatus } from "@/lib/tendas-data";
+import {
+  brl,
+  diffDias,
+  STATUS_LABEL,
+  TENT_TYPES,
+  type CartItem,
+  type Rental,
+  type Tent,
+  type TentStatus,
+} from "@/lib/tendas-data";
+
 import { useTendas } from "@/lib/tendas-store";
 
 export const Route = createFileRoute("/admin")({
