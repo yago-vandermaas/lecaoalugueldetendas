@@ -292,9 +292,13 @@ function Painel() {
         </TabsContent>
 
         <TabsContent value="locacoes" className="mt-4 space-y-3">
+          <Button variant="hero" onClick={() => setNovoPedido(true)}>
+            <Plus /> Registrar pedido manual
+          </Button>
           {rentals.length === 0 && (
             <p className="text-sm text-muted-foreground">Nenhuma locação registrada ainda.</p>
           )}
+
           {rentals.map((r) => (
             <div
               key={r.id}
