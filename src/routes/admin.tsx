@@ -16,7 +16,17 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SiteHeader } from "@/components/SiteHeader";
-import { brl, STATUS_LABEL, TENT_TYPES, type Tent, type TentStatus } from "@/lib/tendas-data";
+import {
+  brl,
+  diffDias,
+  STATUS_LABEL,
+  TENT_TYPES,
+  type CartItem,
+  type Rental,
+  type Tent,
+  type TentStatus,
+} from "@/lib/tendas-data";
+
 import { useTendas } from "@/lib/tendas-store";
 
 export const Route = createFileRoute("/admin")({
@@ -163,8 +173,11 @@ function Painel() {
     deleteRental,
     whatsapp,
     setWhatsapp,
+    addRental,
   } = useTendas();
   const [editando, setEditando] = useState<Tent | null>(null);
+  const [novoPedido, setNovoPedido] = useState(false);
+
 
   const totalEstoque = tents.reduce((s, t) => s + t.estoque, 0);
   const alugadas = rentals.reduce(
@@ -292,9 +305,13 @@ function Painel() {
         </TabsContent>
 
         <TabsContent value="locacoes" className="mt-4 space-y-3">
+          <Button variant="hero" onClick={() => setNovoPedido(true)}>
+            <Plus /> Registrar pedido manual
+          </Button>
           {rentals.length === 0 && (
             <p className="text-sm text-muted-foreground">Nenhuma locação registrada ainda.</p>
           )}
+
           {rentals.map((r) => (
             <div
               key={r.id}
@@ -378,9 +395,230 @@ function Painel() {
           toast.success("Tenda salva!");
         }}
       />
+
+      <PedidoManualDialog
+        open={novoPedido}
+        tents={tents}
+        onClose={() => setNovoPedido(false)}
+        onSave={(r) => {
+          addRental(r);
+          setNovoPedido(false);
+          toast.success("Pedido registrado!");
+        }}
+      />
     </div>
   );
 }
+
+type ItemDraft = { tentId: string; quantidade: number };
+
+function PedidoManualDialog({
+  open,
+  tents,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  tents: Tent[];
+  onClose: () => void;
+  onSave: (r: Rental) => void;
+}) {
+  const [cliente, setCliente] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [local, setLocal] = useState("");
+  const [inicio, setInicio] = useState("");
+  const [fim, setFim] = useState("");
+  const [pago, setPago] = useState(false);
+  const [itens, setItens] = useState<ItemDraft[]>([]);
+  const [totalManual, setTotalManual] = useState("");
+
+  const dias = diffDias(inicio, fim);
+  const itensValidos = itens
+    .map((i) => {
+      const t = tents.find((x) => x.id === i.tentId);
+      return t
+        ? { tentId: t.id, nome: t.nome, diaria: t.diaria, quantidade: Math.max(1, i.quantidade) }
+        : null;
+    })
+    .filter((i): i is CartItem => !!i);
+  const subtotal = itensValidos.reduce((s, i) => s + i.diaria * i.quantidade, 0);
+  const totalCalculado = subtotal * (dias || 1);
+  const total = totalManual.trim() ? Number(totalManual) || 0 : totalCalculado;
+
+  const reset = () => {
+    setCliente("");
+    setTelefone("");
+    setLocal("");
+    setInicio("");
+    setFim("");
+    setPago(false);
+    setItens([]);
+    setTotalManual("");
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          reset();
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-display">Pedido manual (feito por fora)</DialogTitle>
+        </DialogHeader>
+        <form
+          className="space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSave({
+              id: `r${Date.now()}`,
+              cliente: cliente.trim() || "Cliente não informado",
+              telefone: telefone.trim(),
+              local: local.trim(),
+              inicio,
+              fim,
+              dias,
+              itens: itensValidos,
+              total,
+              pago,
+              criadoEm: new Date().toISOString(),
+            });
+            reset();
+          }}
+        >
+          <p className="text-xs text-muted-foreground">
+            Nenhum campo é obrigatório — preencha o que tiver.
+          </p>
+
+          {(
+            [
+              ["cliente", "Nome do cliente", cliente, setCliente, "Opcional"],
+              ["telefone", "Telefone", telefone, setTelefone, "(11) 90000-0000"],
+              ["local", "Local do evento", local, setLocal, "Cidade / endereço"],
+            ] as const
+          ).map(([id, label, valor, set, ph]) => (
+            <div key={id} className="space-y-1.5">
+              <Label htmlFor={`pm-${id}`}>{label}</Label>
+              <Input
+                id={`pm-${id}`}
+                value={valor}
+                placeholder={ph}
+                onChange={(e) => set(e.target.value)}
+              />
+            </div>
+          ))}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="pm-inicio">Início</Label>
+              <Input
+                id="pm-inicio"
+                type="date"
+                value={inicio}
+                onChange={(e) => setInicio(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pm-fim">Fim</Label>
+              <Input id="pm-fim" type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tendas do pedido</Label>
+            {itens.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Select
+                  value={item.tentId}
+                  onValueChange={(v) =>
+                    setItens((arr) => arr.map((x, i) => (i === idx ? { ...x, tentId: v } : x)))
+                  }
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecione a tenda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tents.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.nome} — {brl(t.diaria)}/dia
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min={1}
+                  className="w-20"
+                  value={item.quantidade}
+                  aria-label="Quantidade"
+                  onChange={(e) =>
+                    setItens((arr) =>
+                      arr.map((x, i) =>
+                        i === idx ? { ...x, quantidade: Number(e.target.value) } : x,
+                      ),
+                    )
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Remover item"
+                  onClick={() => setItens((arr) => arr.filter((_, i) => i !== idx))}
+                >
+                  <Trash2 className="text-destructive" />
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="soft"
+              size="sm"
+              onClick={() => setItens((arr) => [...arr, { tentId: "", quantidade: 1 }])}
+            >
+              <Plus /> Adicionar tenda
+            </Button>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pm-total">Valor total (R$)</Label>
+            <Input
+              id="pm-total"
+              type="number"
+              min={0}
+              value={totalManual}
+              placeholder={String(totalCalculado)}
+              onChange={(e) => setTotalManual(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Calculado: {brl(totalCalculado)} {dias ? `(${dias} dias)` : "(sem datas)"} — edite para
+              usar outro valor.
+            </p>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={pago}
+              onChange={(e) => setPago(e.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            Já está pago / concluído
+          </label>
+
+          <Button variant="hero" size="lg" className="w-full" type="submit">
+            Registrar pedido
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function TentDialog({
   tent,
