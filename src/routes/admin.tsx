@@ -163,8 +163,11 @@ function Painel() {
     deleteRental,
     whatsapp,
     setWhatsapp,
+    addRental,
   } = useTendas();
   const [editando, setEditando] = useState<Tent | null>(null);
+  const [novoPedido, setNovoPedido] = useState(false);
+
 
   const totalEstoque = tents.reduce((s, t) => s + t.estoque, 0);
   const alugadas = rentals.reduce(
