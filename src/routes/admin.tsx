@@ -1,0 +1,404 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { CheckCircle2, Lock, Pencil, Plus, Trash2, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SiteHeader } from "@/components/SiteHeader";
+import { brl, STATUS_LABEL, type Tent, type TentStatus } from "@/lib/tendas-data";
+import { useTendas } from "@/lib/tendas-store";
+
+export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [
+      { title: "Painel de Gestão | TendasPro" },
+      {
+        name: "description",
+        content:
+          "Painel do gestor: controle o estoque de tendas, status de locação, faturamento e taxa de ocupação.",
+      },
+      { property: "og:title", content: "Painel de Gestão | TendasPro" },
+      {
+        property: "og:description",
+        content: "Estoque de tendas, faturamento e ocupação em um só lugar.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: AdminPage,
+});
+
+const SENHA = "tendas123";
+
+function AdminPage() {
+  const { isAdmin } = useTendas();
+  return (
+    <div className="min-h-screen">
+      <SiteHeader />
+      {isAdmin ? <Painel /> : <Login />}
+    </div>
+  );
+}
+
+function Login() {
+  const { setIsAdmin } = useTendas();
+  const [senha, setSenha] = useState("");
+
+  return (
+    <div className="mx-auto flex max-w-sm flex-col gap-4 px-4 py-20">
+      <div className="text-center">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+          <Lock className="h-5 w-5" />
+        </span>
+        <h1 className="mt-4 font-display text-2xl font-bold">Acesso do gestor</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Senha de demonstração: tendas123</p>
+      </div>
+      <form
+        className="space-y-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (senha === SENHA) {
+            setIsAdmin(true);
+            toast.success("Bem-vindo ao painel!");
+          } else {
+            toast.error("Senha incorreta.");
+          }
+        }}
+      >
+        <div className="space-y-1.5">
+          <Label htmlFor="senha">Senha</Label>
+          <Input
+            id="senha"
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            placeholder="••••••••"
+          />
+        </div>
+        <Button variant="hero" size="lg" className="w-full" type="submit">
+          Entrar
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+function Painel() {
+  const {
+    tents,
+    rentals,
+    setIsAdmin,
+    setStatus,
+    deleteTent,
+    saveTent,
+    togglePaid,
+    deleteRental,
+    whatsapp,
+    setWhatsapp,
+  } = useTendas();
+  const [editando, setEditando] = useState<Tent | null>(null);
+
+  const totalEstoque = tents.reduce((s, t) => s + t.estoque, 0);
+  const alugadas = rentals.reduce(
+    (s, r) => s + r.itens.reduce((x, i) => x + i.quantidade, 0),
+    0,
+  );
+  const faturamentoRealizado = rentals.filter((r) => r.pago).reduce((s, r) => s + r.total, 0);
+  const faturamentoEstimado = rentals.reduce((s, r) => s + r.total, 0);
+  const ocupadas = tents.filter((t) => t.status !== "disponivel").length;
+  const ocupacao = tents.length ? Math.round((ocupadas / tents.length) * 100) : 0;
+
+  const metrics = [
+    { label: "Tendas alugadas", valor: String(alugadas), sub: `${rentals.length} locações` },
+    { label: "Faturamento realizado", valor: brl(faturamentoRealizado), sub: "pedidos pagos" },
+    { label: "Faturamento estimado", valor: brl(faturamentoEstimado), sub: "incluindo pendentes" },
+    { label: "Taxa de ocupação", valor: `${ocupacao}%`, sub: `${totalEstoque} itens em estoque` },
+  ];
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-bold">Painel de gestão</h1>
+          <p className="text-sm text-muted-foreground">Estoque, locações e faturamento.</p>
+        </div>
+        <Button variant="outline" onClick={() => setIsAdmin(false)}>
+          Sair do modo gestor
+        </Button>
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {metrics.map((m) => (
+          <div key={m.label} className="rounded-2xl border border-border/70 bg-card p-4 shadow-card">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {m.label}
+            </p>
+            <p className="mt-2 font-display text-2xl font-bold text-primary">{m.valor}</p>
+            <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <TrendingUp className="h-3.5 w-3.5 text-whatsapp" /> {m.sub}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <Tabs defaultValue="estoque" className="mt-8">
+        <TabsList>
+          <TabsTrigger value="estoque">Estoque</TabsTrigger>
+          <TabsTrigger value="locacoes">Locações</TabsTrigger>
+          <TabsTrigger value="config">Configurações</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="estoque" className="mt-4 space-y-4">
+          <Button
+            variant="hero"
+            onClick={() =>
+              setEditando({
+                id: `t${Date.now()}`,
+                nome: "",
+                tipo: "Galpão",
+                dimensoes: "",
+                area: 0,
+                diaria: 0,
+                estoque: 1,
+                status: "disponivel",
+                imagem: "",
+                descricao: "",
+              })
+            }
+          >
+            <Plus /> Nova tenda
+          </Button>
+
+          <div className="space-y-3">
+            {tents.map((t) => (
+              <div
+                key={t.id}
+                className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-card p-3 shadow-card"
+              >
+                {t.imagem && (
+                  <img
+                    src={t.imagem}
+                    alt={t.nome}
+                    loading="lazy"
+                    className="h-16 w-20 rounded-lg object-cover"
+                  />
+                )}
+                <div className="min-w-40 flex-1">
+                  <p className="font-semibold">{t.nome}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t.dimensoes} · {brl(t.diaria)}/dia · {t.estoque} em estoque
+                  </p>
+                </div>
+                <Select
+                  value={t.status}
+                  onValueChange={(v) => setStatus(t.id, v as TentStatus)}
+                >
+                  <SelectTrigger className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(STATUS_LABEL) as TentStatus[]).map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {STATUS_LABEL[s]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="soft" size="icon" aria-label="Editar" onClick={() => setEditando(t)}>
+                  <Pencil />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Remover"
+                  onClick={() => {
+                    deleteTent(t.id);
+                    toast.success("Tenda removida.");
+                  }}
+                >
+                  <Trash2 className="text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="locacoes" className="mt-4 space-y-3">
+          {rentals.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhuma locação registrada ainda.</p>
+          )}
+          {rentals.map((r) => (
+            <div
+              key={r.id}
+              className="rounded-2xl border border-border/70 bg-card p-4 shadow-card"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{r.cliente}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {r.telefone} · {r.local}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {r.inicio.split("-").reverse().join("/")} →{" "}
+                    {r.fim.split("-").reverse().join("/")} ({r.dias} dias)
+                  </p>
+                  <ul className="mt-2 text-sm">
+                    {r.itens.map((i) => (
+                      <li key={i.tentId} className="text-muted-foreground">
+                        {i.quantidade}x {i.nome}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <span className="font-display text-lg font-bold text-primary">
+                    {brl(r.total)}
+                  </span>
+                  <Badge
+                    className={
+                      r.pago
+                        ? "border-0 bg-whatsapp text-whatsapp-foreground"
+                        : "border-0 bg-warning text-warning-foreground"
+                    }
+                  >
+                    {r.pago ? "Pago / concluído" : "Pendente"}
+                  </Badge>
+                  <div className="flex gap-2">
+                    <Button variant="soft" size="sm" onClick={() => togglePaid(r.id)}>
+                      <CheckCircle2 /> {r.pago ? "Reabrir" : "Marcar pago"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Excluir locação"
+                      onClick={() => deleteRental(r.id)}
+                    >
+                      <Trash2 className="text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="config" className="mt-4 max-w-md space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="wpp">WhatsApp da empresa (com DDI e DDD)</Label>
+            <Input
+              id="wpp"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ""))}
+              placeholder="5511999999999"
+            />
+            <p className="text-xs text-muted-foreground">
+              Todos os pedidos do site serão enviados para este número.
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <TentDialog
+        tent={editando}
+        onClose={() => setEditando(null)}
+        onSave={(t) => {
+          saveTent(t);
+          setEditando(null);
+          toast.success("Tenda salva!");
+        }}
+      />
+    </div>
+  );
+}
+
+function TentDialog({
+  tent,
+  onClose,
+  onSave,
+}: {
+  tent: Tent | null;
+  onClose: () => void;
+  onSave: (t: Tent) => void;
+}) {
+  const [draft, setDraft] = useState<Tent | null>(tent);
+  const atual = draft && tent && draft.id === tent.id ? draft : tent;
+
+  return (
+    <Dialog open={!!tent} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-display">Cadastro de tenda</DialogTitle>
+        </DialogHeader>
+        {atual && (
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!atual.nome.trim() || !atual.dimensoes.trim() || atual.diaria <= 0) {
+                toast.error("Preencha nome, dimensões e valor da diária.");
+                return;
+              }
+              onSave(atual);
+            }}
+          >
+            {(
+              [
+                ["nome", "Nome do modelo", "text"],
+                ["dimensoes", "Dimensões (ex: 10m x 10m)", "text"],
+                ["tipo", "Tipo", "text"],
+                ["imagem", "URL da imagem", "url"],
+                ["descricao", "Descrição", "text"],
+              ] as const
+            ).map(([key, label, type]) => (
+              <div key={key} className="space-y-1.5">
+                <Label htmlFor={key}>{label}</Label>
+                <Input
+                  id={key}
+                  type={type}
+                  value={atual[key]}
+                  onChange={(e) => setDraft({ ...atual, [key]: e.target.value })}
+                />
+              </div>
+            ))}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="diaria">Valor da diária (R$)</Label>
+                <Input
+                  id="diaria"
+                  type="number"
+                  min={0}
+                  value={atual.diaria}
+                  onChange={(e) => setDraft({ ...atual, diaria: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="estoque">Quantidade em estoque</Label>
+                <Input
+                  id="estoque"
+                  type="number"
+                  min={0}
+                  value={atual.estoque}
+                  onChange={(e) => setDraft({ ...atual, estoque: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+            <Button variant="hero" size="lg" className="w-full" type="submit">
+              Salvar tenda
+            </Button>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
