@@ -16,8 +16,10 @@ type Persisted = {
   rentals: Rental[];
   cart: CartItem[];
   whatsapp: string;
+  senha: string;
   isAdmin: boolean;
 };
+
 
 const initial: Persisted = {
   tents: mockTents,

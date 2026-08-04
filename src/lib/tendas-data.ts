@@ -45,13 +45,13 @@ export const STATUS_LABEL: Record<TentStatus, string> = {
   manutencao: "Em manutenção",
 };
 
-export const TENT_TYPES = ["Chapéu de bruxa", "Galpão", "Piramidal", "Cristal"] as const;
+export const TENT_TYPES = ["Piramidal", "Chapéu de bruxa"] as const;
 
 export const mockTents: Tent[] = [
   {
     id: "t1",
-    nome: "Tenda Galpão 10x10",
-    tipo: "Galpão",
+    nome: "Tenda Piramidal 10x10",
+    tipo: "Piramidal",
     dimensoes: "10m x 10m",
     area: 100,
     diaria: 850,
@@ -74,8 +74,8 @@ export const mockTents: Tent[] = [
   },
   {
     id: "t3",
-    nome: "Tenda Cristal 12x20",
-    tipo: "Cristal",
+    nome: "Tenda Chapéu de Bruxa 12x20",
+    tipo: "Chapéu de bruxa",
     dimensoes: "12m x 20m",
     area: 240,
     diaria: 2400,
@@ -97,6 +97,7 @@ export const mockTents: Tent[] = [
     descricao: "Charme clássico com cortinas brancas. Ótima para recepções e áreas de bar.",
   },
 ];
+
 
 export const brl = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
