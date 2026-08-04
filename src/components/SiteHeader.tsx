@@ -15,7 +15,7 @@ export function SiteHeader({ onOpenCart }: { onOpenCart?: () => void }) {
             <TentTree className="h-5 w-5" />
           </span>
           <span className="font-display text-lg font-bold leading-none">
-            Tendas<span className="text-whatsapp">Pro</span>
+            Lecão&nbsp;Aluguel de Tendas
           </span>
         </Link>
 
