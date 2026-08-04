@@ -16,8 +16,10 @@ type Persisted = {
   rentals: Rental[];
   cart: CartItem[];
   whatsapp: string;
+  senha: string;
   isAdmin: boolean;
 };
+
 
 const initial: Persisted = {
   tents: mockTents,
@@ -51,8 +53,10 @@ const initial: Persisted = {
   ],
   cart: [],
   whatsapp: "5511999999999",
+  senha: "tendas123",
   isAdmin: false,
 };
+
 
 type StoreValue = Persisted & {
   addToCart: (tent: Tent) => void;
@@ -65,8 +69,10 @@ type StoreValue = Persisted & {
   togglePaid: (id: string) => void;
   deleteRental: (id: string) => void;
   setWhatsapp: (n: string) => void;
+  setSenha: (s: string) => void;
   setIsAdmin: (v: boolean) => void;
 };
+
 
 const Ctx = createContext<StoreValue | null>(null);
 
@@ -134,7 +140,9 @@ export function TendasProvider({ children }: { children: ReactNode }) {
         patch((s) => ({ rentals: s.rentals.map((r) => (r.id === id ? { ...r, pago: !r.pago } : r)) })),
       deleteRental: (id) => patch((s) => ({ rentals: s.rentals.filter((r) => r.id !== id) })),
       setWhatsapp: (whatsapp) => patch(() => ({ whatsapp })),
+      setSenha: (senha) => patch(() => ({ senha })),
       setIsAdmin: (isAdmin) => patch(() => ({ isAdmin })),
+
     }),
     [state, patch],
   );

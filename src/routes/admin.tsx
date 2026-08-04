@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SiteHeader } from "@/components/SiteHeader";
-import { brl, STATUS_LABEL, type Tent, type TentStatus } from "@/lib/tendas-data";
+import { brl, STATUS_LABEL, TENT_TYPES, type Tent, type TentStatus } from "@/lib/tendas-data";
 import { useTendas } from "@/lib/tendas-store";
 
 export const Route = createFileRoute("/admin")({
@@ -39,8 +39,6 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const SENHA = "tendas123";
-
 function AdminPage() {
   const { isAdmin } = useTendas();
   return (
@@ -52,8 +50,8 @@ function AdminPage() {
 }
 
 function Login() {
-  const { setIsAdmin } = useTendas();
-  const [senha, setSenha] = useState("");
+  const { setIsAdmin, senha: senhaAtual } = useTendas();
+  const [senha, setSenhaInput] = useState("");
 
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-4 px-4 py-20">
@@ -62,13 +60,15 @@ function Login() {
           <Lock className="h-5 w-5" />
         </span>
         <h1 className="mt-4 font-display text-2xl font-bold">Acesso do gestor</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Senha de demonstração: tendas123</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Use a senha cadastrada em Configurações.
+        </p>
       </div>
       <form
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
-          if (senha === SENHA) {
+          if (senha === senhaAtual) {
             setIsAdmin(true);
             toast.success("Bem-vindo ao painel!");
           } else {
@@ -82,7 +82,7 @@ function Login() {
             id="senha"
             type="password"
             value={senha}
-            onChange={(e) => setSenha(e.target.value)}
+            onChange={(e) => setSenhaInput(e.target.value)}
             placeholder="••••••••"
           />
         </div>
@@ -93,6 +93,63 @@ function Login() {
     </div>
   );
 }
+
+function TrocarSenha() {
+  const { senha: senhaAtualSalva, setSenha } = useTendas();
+  const [atual, setAtual] = useState("");
+  const [nova, setNova] = useState("");
+  const [confirma, setConfirma] = useState("");
+
+  return (
+    <form
+      className="space-y-3 rounded-2xl border border-border/70 bg-card p-4 shadow-card"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (atual !== senhaAtualSalva) {
+          toast.error("Senha atual incorreta.");
+          return;
+        }
+        if (nova.length < 6) {
+          toast.error("A nova senha deve ter ao menos 6 caracteres.");
+          return;
+        }
+        if (nova !== confirma) {
+          toast.error("As senhas não coincidem.");
+          return;
+        }
+        setSenha(nova);
+        setAtual("");
+        setNova("");
+        setConfirma("");
+        toast.success("Senha alterada com sucesso!");
+      }}
+    >
+      <p className="font-semibold">Trocar senha do painel</p>
+      {(
+        [
+          ["atual", "Senha atual", atual, setAtual],
+          ["nova", "Nova senha", nova, setNova],
+          ["confirma", "Confirmar nova senha", confirma, setConfirma],
+        ] as const
+      ).map(([id, label, valor, set]) => (
+        <div key={id} className="space-y-1.5">
+          <Label htmlFor={id}>{label}</Label>
+          <Input
+            id={id}
+            type="password"
+            value={valor}
+            onChange={(e) => set(e.target.value)}
+            placeholder="••••••••"
+          />
+        </div>
+      ))}
+      <Button variant="hero" className="w-full" type="submit">
+        Salvar nova senha
+      </Button>
+    </form>
+  );
+}
+
 
 function Painel() {
   const {
@@ -293,7 +350,7 @@ function Painel() {
           ))}
         </TabsContent>
 
-        <TabsContent value="config" className="mt-4 max-w-md space-y-3">
+        <TabsContent value="config" className="mt-4 max-w-md space-y-6">
           <div className="space-y-1.5">
             <Label htmlFor="wpp">WhatsApp da empresa (com DDI e DDD)</Label>
             <Input
@@ -306,7 +363,10 @@ function Painel() {
               Todos os pedidos do site serão enviados para este número.
             </p>
           </div>
+
+          <TrocarSenha />
         </TabsContent>
+
       </Tabs>
 
       <TentDialog
@@ -356,8 +416,6 @@ function TentDialog({
               [
                 ["nome", "Nome do modelo", "text"],
                 ["dimensoes", "Dimensões (ex: 10m x 10m)", "text"],
-                ["tipo", "Tipo", "text"],
-                ["imagem", "URL da imagem", "url"],
                 ["descricao", "Descrição", "text"],
               ] as const
             ).map(([key, label, type]) => (
@@ -371,6 +429,64 @@ function TentDialog({
                 />
               </div>
             ))}
+
+            <div className="space-y-1.5">
+              <Label>Tipo de tenda</Label>
+              <Select
+                value={TENT_TYPES.includes(atual.tipo as (typeof TENT_TYPES)[number]) ? atual.tipo : ""}
+                onValueChange={(v) => setDraft({ ...atual, tipo: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TENT_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="imagem">URL da imagem</Label>
+              <Input
+                id="imagem"
+                type="url"
+                value={atual.imagem.startsWith("data:") ? "" : atual.imagem}
+                placeholder="https://..."
+                onChange={(e) => setDraft({ ...atual, imagem: e.target.value })}
+              />
+              <Label htmlFor="upload" className="pt-2 text-xs text-muted-foreground">
+                ou envie uma imagem do seu dispositivo
+              </Label>
+              <Input
+                id="upload"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 3 * 1024 * 1024) {
+                    toast.error("Imagem muito grande. Escolha um arquivo de até 3 MB.");
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = () =>
+                    setDraft({ ...atual, imagem: String(reader.result) });
+                  reader.readAsDataURL(file);
+                }}
+              />
+              {atual.imagem && (
+                <img
+                  src={atual.imagem}
+                  alt="Pré-visualização da tenda"
+                  className="mt-2 h-28 w-full rounded-lg object-cover"
+                />
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="diaria">Valor da diária (R$)</Label>

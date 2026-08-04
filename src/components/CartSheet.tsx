@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarDays, MessageCircle, Trash2 } from "lucide-react";
+import { CalendarDays, MessageCircle, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { brl, diffDias, type Rental } from "@/lib/tendas-data";
 import { useTendas } from "@/lib/tendas-store";
+import { openWhatsApp } from "@/lib/whatsapp";
+
 
 type Form = { nome: string; telefone: string; local: string; inicio: string; fim: string };
 const vazio: Form = { nome: "", telefone: "", local: "", inicio: "", fim: "" };
@@ -74,12 +76,12 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
       ),
       "",
       `*Valor total estimado:* ${brl(total)}`,
+      "",
+      "_Obs.: o valor do frete/entrega é calculado à parte, conforme o local do evento._",
     ];
 
-    window.open(
-      `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`,
-      "_blank",
-    );
+    openWhatsApp(whatsapp, linhas.join("\n"));
+
     clearCart();
     setForm(vazio);
     onOpenChange(false);
@@ -160,7 +162,15 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
               <span>Total</span>
               <span>{brl(total)}</span>
             </div>
+            <p className="mt-3 flex items-start gap-2 rounded-lg bg-background/70 p-2 text-xs text-muted-foreground">
+              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+              <span>
+                O valor acima não inclui <strong>frete</strong>: a entrega e montagem são cobradas à
+                parte e variam conforme o local do evento. Confirmamos o valor exato no WhatsApp.
+              </span>
+            </p>
           </div>
+
 
           <Button variant="whatsapp" size="xl" className="w-full" onClick={finalizar}>
             <MessageCircle /> Finalizar pedido no WhatsApp
