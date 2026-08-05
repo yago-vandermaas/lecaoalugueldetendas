@@ -5,10 +5,21 @@
  * Usa sempre o domínio wa.me e força a abertura no contexto de janela do topo.
  * Retorna a URL gerada e se a abertura foi bem-sucedida.
  */
+/** Normaliza o número para o formato aceito pelo wa.me: só dígitos, com DDI 55. */
+export function normalizeWhatsAppNumber(numero: string) {
+  let num = (numero || "").replace(/\D/g, "");
+  num = num.replace(/^0+/, "");
+  if (num.startsWith("550")) num = "55" + num.slice(3);
+  // 10-11 dígitos = número brasileiro sem DDI
+  if (num.length === 10 || num.length === 11) num = "55" + num;
+  return num;
+}
+
 export function buildWhatsAppUrl(numero: string, mensagem: string) {
-  const num = numero.replace(/\D/g, "");
+  const num = normalizeWhatsAppNumber(numero);
   return `https://wa.me/${num}${mensagem ? `?text=${encodeURIComponent(mensagem)}` : ""}`;
 }
+
 
 export function openWhatsApp(numero: string, mensagem: string): { url: string; ok: boolean } {
   const url = buildWhatsAppUrl(numero, mensagem);
