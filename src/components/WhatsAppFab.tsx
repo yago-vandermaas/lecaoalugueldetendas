@@ -1,11 +1,14 @@
 import { MessageCircle } from "lucide-react";
 import { useTendas } from "@/lib/tendas-store";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export function WhatsAppFab() {
   const { whatsapp } = useTendas();
-  const href = `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+  const href = buildWhatsAppUrl(
+    whatsapp,
     "Olá! Vim pelo site e gostaria de um orçamento de tendas.",
-  )}`;
+  );
+
 
 
   return (
