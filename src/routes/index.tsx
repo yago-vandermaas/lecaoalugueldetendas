@@ -13,13 +13,13 @@ import heroImg from "@/assets/hero-tendas.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aluguel de Tendas para Eventos | TendasPro" },
+      { title: "Aluguel de Tendas para Eventos | Lecão Aluguel de Tendas" },
       {
         name: "description",
         content:
           "Aluguel de tendas para casamentos, festas e feiras. Veja modelos, tamanhos e preços da diária e reserve em minutos pelo WhatsApp.",
       },
-      { property: "og:title", content: "Aluguel de Tendas para Eventos | TendasPro" },
+      { property: "og:title", content: "Aluguel de Tendas para Eventos | Lecão Aluguel de Tendas" },
       {
         property: "og:description",
         content: "Catálogo de tendas com preço da diária e reserva rápida pelo WhatsApp.",
@@ -91,7 +91,7 @@ function Index() {
             {[
               { icon: Truck, t: "Entrega e montagem", d: "Equipe própria inclusa" },
               { icon: Clock, t: "Resposta em minutos", d: "Atendimento no WhatsApp" },
-              { icon: ShieldCheck, t: "Estrutura segura", d: "Lonas antichama revisadas" },
+              { icon: ShieldCheck, t: "Estrutura segura", d: "Tendas revisadas" },
             ].map(({ icon: Icon, t, d }) => (
               <div
                 key={t}
@@ -162,8 +162,10 @@ function Index() {
 
       <footer className="border-t border-border bg-secondary/50 py-10">
         <div className="mx-auto max-w-6xl px-4 text-sm text-muted-foreground">
-          <p className="font-display text-base font-bold text-foreground">TendasPro Locações</p>
-          <p className="mt-1">Atendimento todos os dias, das 8h às 20h.</p>
+          <p className="font-display text-base font-bold text-foreground">
+            Lecão Aluguel de Tendas
+          </p>
+          <p className="mt-1">Atendimento todos os dias.</p>
         </div>
       </footer>
 

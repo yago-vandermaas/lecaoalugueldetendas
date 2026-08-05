@@ -32,13 +32,13 @@ import { useTendas } from "@/lib/tendas-store";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Painel de Gestão | TendasPro" },
+      { title: "Painel de Gestão | Lecão Aluguel de Tendas" },
       {
         name: "description",
         content:
           "Painel do gestor: controle o estoque de tendas, status de locação, faturamento e taxa de ocupação.",
       },
-      { property: "og:title", content: "Painel de Gestão | TendasPro" },
+      { property: "og:title", content: "Painel de Gestão | Lecão Aluguel de Tendas" },
       {
         property: "og:description",
         content: "Estoque de tendas, faturamento e ocupação em um só lugar.",
