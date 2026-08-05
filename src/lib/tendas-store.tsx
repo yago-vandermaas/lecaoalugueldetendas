@@ -59,7 +59,7 @@ const initial: Persisted = {
 
 
 type StoreValue = Persisted & {
-  addToCart: (tent: Tent) => void;
+  addToCart: (tent: Tent, quantidade?: number) => void;
   removeFromCart: (tentId: string) => void;
   clearCart: () => void;
   saveTent: (tent: Tent) => void;
@@ -104,16 +104,21 @@ export function TendasProvider({ children }: { children: ReactNode }) {
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
-      addToCart: (tent) =>
-        patch((s) => ({
-          cart: s.cart.some((i) => i.tentId === tent.id)
-            ? s.cart.map((i) => (i.tentId === tent.id ? { ...i, quantidade: i.quantidade + 1 } : i))
-            : [
-                ...s.cart,
-                { tentId: tent.id, nome: tent.nome, diaria: tent.diaria, quantidade: 1 },
-              ],
-          tents: s.tents.map((t) => (t.id === tent.id ? { ...t, status: "reservada" } : t)),
-        })),
+      addToCart: (tent, quantidade = 1) =>
+        patch((s) => {
+          const atual = s.cart.find((i) => i.tentId === tent.id);
+          const max = Math.max(1, tent.estoque);
+          const nova = Math.min(max, (atual?.quantidade ?? 0) + Math.max(1, quantidade));
+          return {
+            cart: atual
+              ? s.cart.map((i) => (i.tentId === tent.id ? { ...i, quantidade: nova } : i))
+              : [
+                  ...s.cart,
+                  { tentId: tent.id, nome: tent.nome, diaria: tent.diaria, quantidade: nova },
+                ],
+            tents: s.tents.map((t) => (t.id === tent.id ? { ...t, status: "reservada" } : t)),
+          };
+        }),
       removeFromCart: (tentId) =>
         patch((s) => ({
           cart: s.cart.filter((i) => i.tentId !== tentId),
