@@ -81,12 +81,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TendasPro | Aluguel de Tendas para Eventos" },
+      { title: "Lecão Aluguel de Tendas | Aluguel de Tendas para Eventos" },
       {
         name: "description",
         content: "Locação de tendas para casamentos, festas e feiras com reserva pelo WhatsApp.",
       },
-      { property: "og:title", content: "TendasPro | Aluguel de Tendas para Eventos" },
+      { property: "og:title", content: "Lecão Aluguel de Tendas | Aluguel de Tendas para Eventos" },
       {
         property: "og:description",
         content: "Locação de tendas para casamentos, festas e feiras com reserva pelo WhatsApp.",
