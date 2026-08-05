@@ -145,8 +145,9 @@ function Index() {
               key={tent.id}
               tent={tent}
               inCart={cart.some((i) => i.tentId === tent.id)}
-              onAdd={() => {
-                addToCart(tent);
+              cartQty={cart.find((i) => i.tentId === tent.id)?.quantidade ?? 0}
+              onAdd={(qtd) => {
+                addToCart(tent, qtd);
                 setCartOpen(true);
               }}
             />
