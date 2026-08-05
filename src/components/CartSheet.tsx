@@ -60,7 +60,7 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
     addRental(rental);
 
     const linhas = [
-      "*NOVO PEDIDO DE RESERVA — TendasPro*",
+      "*NOVO PEDIDO DE RESERVA — Lecão Aluguel de Tendas*",
       "",
       `*Cliente:* ${form.nome}`,
       `*Telefone:* ${form.telefone}`,
@@ -80,12 +80,33 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
       "_Obs.: o valor do frete/entrega é calculado à parte, conforme o local do evento._",
     ];
 
-    openWhatsApp(whatsapp, linhas.join("\n"));
+    const mensagem = linhas.join("\n");
+    const { url, ok } = openWhatsApp(whatsapp, mensagem);
 
     clearCart();
     setForm(vazio);
     onOpenChange(false);
-    toast.success("Pedido enviado para o WhatsApp!");
+
+    if (ok) {
+      toast.success("Pedido enviado para o WhatsApp!", {
+        description: "Não abriu? Toque em 'Abrir WhatsApp'.",
+        duration: 15000,
+        action: {
+          label: "Abrir WhatsApp",
+          onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
+        },
+      });
+    } else {
+      void navigator.clipboard?.writeText(mensagem).catch(() => {});
+      toast.error("Seu navegador bloqueou a abertura automática.", {
+        description: "Copiamos a mensagem. Toque em 'Abrir WhatsApp' para continuar.",
+        duration: 20000,
+        action: {
+          label: "Abrir WhatsApp",
+          onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
+        },
+      });
+    }
   };
 
   const campo = (key: keyof Form, label: string, props: React.ComponentProps<"input"> = {}) => (
