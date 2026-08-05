@@ -91,7 +91,7 @@ function Index() {
             {[
               { icon: Truck, t: "Entrega e montagem", d: "Equipe própria inclusa" },
               { icon: Clock, t: "Resposta em minutos", d: "Atendimento no WhatsApp" },
-              { icon: ShieldCheck, t: "Estrutura segura", d: "Lonas antichama revisadas" },
+              { icon: ShieldCheck, t: "Estrutura segura", d: "Tendas revisadas" },
             ].map(({ icon: Icon, t, d }) => (
               <div
                 key={t}
