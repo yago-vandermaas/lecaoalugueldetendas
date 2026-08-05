@@ -13,13 +13,13 @@ import heroImg from "@/assets/hero-tendas.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aluguel de Tendas para Eventos | TendasPro" },
+      { title: "Aluguel de Tendas para Eventos | Lecão Aluguel de Tendas" },
       {
         name: "description",
         content:
           "Aluguel de tendas para casamentos, festas e feiras. Veja modelos, tamanhos e preços da diária e reserve em minutos pelo WhatsApp.",
       },
-      { property: "og:title", content: "Aluguel de Tendas para Eventos | TendasPro" },
+      { property: "og:title", content: "Aluguel de Tendas para Eventos | Lecão Aluguel de Tendas" },
       {
         property: "og:description",
         content: "Catálogo de tendas com preço da diária e reserva rápida pelo WhatsApp.",
