@@ -162,8 +162,10 @@ function Index() {
 
       <footer className="border-t border-border bg-secondary/50 py-10">
         <div className="mx-auto max-w-6xl px-4 text-sm text-muted-foreground">
-          <p className="font-display text-base font-bold text-foreground">TendasPro Locações</p>
-          <p className="mt-1">Atendimento todos os dias, das 8h às 20h.</p>
+          <p className="font-display text-base font-bold text-foreground">
+            Lecão Aluguel de Tendas
+          </p>
+          <p className="mt-1">Atendimento todos os dias.</p>
         </div>
       </footer>
 
