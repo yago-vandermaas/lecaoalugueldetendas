@@ -560,7 +560,6 @@ function PedidoManualDialog({
           onSubmit={(e) => {
             e.preventDefault();
             onSave({
-              id: `r${Date.now()}`,
               cliente: cliente.trim() || "Cliente não informado",
               telefone: telefone.trim(),
               local: local.trim(),
@@ -570,8 +569,9 @@ function PedidoManualDialog({
               itens: itensValidos,
               total,
               pago,
-              criadoEm: new Date().toISOString(),
+              situacao: "confirmado",
             });
+
             reset();
           }}
         >
