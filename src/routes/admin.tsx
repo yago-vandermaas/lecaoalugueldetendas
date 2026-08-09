@@ -474,7 +474,7 @@ function Painel() {
         tent={editando}
         onClose={() => setEditando(null)}
         onSave={(t) => {
-          saveTent(t);
+          void saveTent(t);
           setEditando(null);
           toast.success("Tenda salva!");
         }}
@@ -485,7 +485,7 @@ function Painel() {
         tents={tents}
         onClose={() => setNovoPedido(false)}
         onSave={(r) => {
-          addRental(r);
+          void addRental(r);
           setNovoPedido(false);
           toast.success("Pedido registrado!");
         }}
@@ -505,8 +505,9 @@ function PedidoManualDialog({
   open: boolean;
   tents: Tent[];
   onClose: () => void;
-  onSave: (r: Rental) => void;
+  onSave: (r: NewRental) => void;
 }) {
+
   const [cliente, setCliente] = useState("");
   const [telefone, setTelefone] = useState("");
   const [local, setLocal] = useState("");
