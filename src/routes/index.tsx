@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { tents, cart, addToCart } = useTendas();
+  const { tents, cart, addToCart, disponiveis } = useTendas();
   const [cartOpen, setCartOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [tipo, setTipo] = useState<string>("todos");
@@ -146,12 +146,14 @@ function Index() {
               tent={tent}
               inCart={cart.some((i) => i.tentId === tent.id)}
               cartQty={cart.find((i) => i.tentId === tent.id)?.quantidade ?? 0}
+              disponiveis={disponiveis(tent)}
               onAdd={(qtd) => {
                 addToCart(tent, qtd);
                 setCartOpen(true);
               }}
             />
           ))}
+
         </div>
 
         {filtradas.length === 0 && (

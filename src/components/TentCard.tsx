@@ -8,18 +8,21 @@ export function TentCard({
   tent,
   inCart,
   cartQty = 0,
+  disponiveis,
   onAdd,
 }: {
   tent: Tent;
   inCart: boolean;
   cartQty?: number;
+  /** Estoque livre agora (já descontando pedidos e o carrinho). */
+  disponiveis: number;
   onAdd: (quantidade: number) => void;
 }) {
-  const disponiveis = Math.max(0, tent.estoque - cartQty);
   const indisponivel = tent.status === "manutencao" || disponiveis <= 0;
   const [qtd, setQtd] = useState(1);
   const max = Math.max(1, disponiveis);
   const quantidade = Math.min(qtd, max);
+
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elev">
