@@ -1,8 +1,3 @@
-import tenda1 from "@/assets/tenda-1.jpg";
-import tenda2 from "@/assets/tenda-2.jpg";
-import tenda3 from "@/assets/tenda-3.jpg";
-import tenda4 from "@/assets/tenda-4.jpg";
-
 export type TentStatus = "disponivel" | "reservada" | "manutencao";
 
 export type Tent = {
@@ -25,6 +20,9 @@ export type CartItem = {
   quantidade: number;
 };
 
+/** Situação do pedido no controle de estoque. */
+export type RentalSituacao = "pendente" | "confirmado" | "desistencia";
+
 export type Rental = {
   id: string;
   cliente: string;
@@ -36,8 +34,12 @@ export type Rental = {
   itens: CartItem[];
   total: number;
   pago: boolean;
+  situacao: RentalSituacao;
   criadoEm: string;
 };
+
+/** Novo pedido antes de existir no banco (id gerado pelo Supabase). */
+export type NewRental = Omit<Rental, "id" | "criadoEm">;
 
 export const STATUS_LABEL: Record<TentStatus, string> = {
   disponivel: "Disponível",
@@ -45,59 +47,16 @@ export const STATUS_LABEL: Record<TentStatus, string> = {
   manutencao: "Em manutenção",
 };
 
+export const SITUACAO_LABEL: Record<RentalSituacao, string> = {
+  pendente: "Pendente de confirmação",
+  confirmado: "Alugadas",
+  desistencia: "Desistência do cliente",
+};
+
+/** Pedidos que ocupam estoque (descontam das tendas disponíveis). */
+export const SITUACOES_OCUPANDO: RentalSituacao[] = ["pendente", "confirmado"];
+
 export const TENT_TYPES = ["Piramidal", "Chapéu de bruxa"] as const;
-
-export const mockTents: Tent[] = [
-  {
-    id: "t1",
-    nome: "Tenda Piramidal 10x10",
-    tipo: "Piramidal",
-    dimensoes: "10m x 10m",
-    area: 100,
-    diaria: 850,
-    estoque: 3,
-    status: "disponivel",
-    imagem: tenda1,
-    descricao: "Ideal para casamentos e festas de até 120 pessoas. Fechamento lateral incluso.",
-  },
-  {
-    id: "t2",
-    nome: "Tenda Piramidal 3x3",
-    tipo: "Piramidal",
-    dimensoes: "3m x 3m",
-    area: 9,
-    diaria: 180,
-    estoque: 12,
-    status: "disponivel",
-    imagem: tenda2,
-    descricao: "Perfeita para food trucks, feiras e pequenos estandes. Montagem rápida.",
-  },
-  {
-    id: "t3",
-    nome: "Tenda Chapéu de Bruxa 12x20",
-    tipo: "Chapéu de bruxa",
-    dimensoes: "12m x 20m",
-    area: 240,
-    diaria: 2400,
-    estoque: 1,
-    status: "reservada",
-    imagem: tenda3,
-    descricao: "Estrutura premium com forro e iluminação decorativa para grandes eventos.",
-  },
-  {
-    id: "t4",
-    nome: "Tenda Chapéu de Bruxa 6x6",
-    tipo: "Chapéu de bruxa",
-    dimensoes: "6m x 6m",
-    area: 36,
-    diaria: 420,
-    estoque: 5,
-    status: "disponivel",
-    imagem: tenda4,
-    descricao: "Charme clássico com cortinas brancas. Ótima para recepções e áreas de bar.",
-  },
-];
-
 
 export const brl = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
