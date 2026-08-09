@@ -230,7 +230,7 @@ function Painel() {
         </Button>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         {metrics.map((m) => (
           <div key={m.label} className="rounded-2xl border border-border/70 bg-card p-4 shadow-card">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -256,9 +256,10 @@ function Painel() {
             variant="hero"
             onClick={() =>
               setEditando({
-                id: `t${Date.now()}`,
+                id: "",
                 nome: "",
-                tipo: "Galpão",
+                tipo: "Piramidal",
+
                 dimensoes: "",
                 area: 0,
                 diaria: 0,
@@ -289,13 +290,24 @@ function Painel() {
                 <div className="min-w-40 flex-1">
                   <p className="font-semibold">{t.nome}</p>
                   <p className="text-sm text-muted-foreground">
-                    {t.dimensoes} · {brl(t.diaria)}/dia · {t.estoque} em estoque
+                    {t.dimensoes} · {brl(t.diaria)}/dia · {t.estoque} no estoque
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="text-warning-foreground/80">{reservadas(t.id)} comprometidas</span>{" "}
+                    ·{" "}
+                    <strong className="text-foreground">
+                      {t.status === "manutencao"
+                        ? 0
+                        : Math.max(0, t.estoque - reservadas(t.id))}{" "}
+                      disponíveis
+                    </strong>
                   </p>
                 </div>
                 <Select
                   value={t.status}
-                  onValueChange={(v) => setStatus(t.id, v as TentStatus)}
+                  onValueChange={(v) => void setStatus(t.id, v as TentStatus)}
                 >
+
                   <SelectTrigger className="w-44">
                     <SelectValue />
                   </SelectTrigger>
