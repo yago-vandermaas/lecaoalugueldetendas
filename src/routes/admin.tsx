@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { CheckCircle2, Lock, Pencil, Plus, Trash2, TrendingUp } from "lucide-react";
+import {
+  CheckCircle2,
+  Lock,
+  Pencil,
+  Plus,
+  ThumbsUp,
+  Trash2,
+  TrendingUp,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,15 +28,18 @@ import { SiteHeader } from "@/components/SiteHeader";
 import {
   brl,
   diffDias,
+  SITUACAO_LABEL,
+  SITUACOES_OCUPANDO,
   STATUS_LABEL,
   TENT_TYPES,
   type CartItem,
-  type Rental,
+  type NewRental,
   type Tent,
   type TentStatus,
 } from "@/lib/tendas-data";
 
 import { useTendas } from "@/lib/tendas-store";
+
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
