@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { brl, diffDias, type Rental } from "@/lib/tendas-data";
+import { brl, diffDias, type NewRental } from "@/lib/tendas-data";
 import { useTendas } from "@/lib/tendas-store";
 import { openWhatsApp } from "@/lib/whatsapp";
 
@@ -34,7 +34,7 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
     return Object.keys(e).length === 0;
   };
 
-  const finalizar = () => {
+  const finalizar = async () => {
     if (cart.length === 0) {
       toast.error("Selecione pelo menos uma tenda.");
       return;
@@ -44,8 +44,7 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
       return;
     }
 
-    const rental: Rental = {
-      id: `r${Date.now()}`,
+    const rental: NewRental = {
       cliente: form.nome,
       telefone: form.telefone,
       local: form.local,
@@ -55,9 +54,10 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
       itens: cart,
       total,
       pago: false,
-      criadoEm: new Date().toISOString(),
+      situacao: "pendente",
     };
-    addRental(rental);
+    await addRental(rental);
+
 
     const linhas = [
       "*NOVO PEDIDO DE RESERVA — Lecão Aluguel de Tendas*",
@@ -192,10 +192,15 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
             </p>
           </div>
 
+          <p className="rounded-lg bg-warning/10 p-2 text-xs text-muted-foreground">
+            Ao finalizar, seu pedido entra como <strong>pendente de confirmação</strong> e as tendas
+            já ficam separadas para você até o gestor confirmar.
+          </p>
 
-          <Button variant="whatsapp" size="xl" className="w-full" onClick={finalizar}>
+          <Button variant="whatsapp" size="xl" className="w-full" onClick={() => void finalizar()}>
             <MessageCircle /> Finalizar pedido no WhatsApp
           </Button>
+
         </div>
       </SheetContent>
     </Sheet>
