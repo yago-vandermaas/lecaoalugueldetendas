@@ -183,6 +183,8 @@ function Painel() {
     saveTent,
     togglePaid,
     deleteRental,
+    setSituacao,
+    reservadas,
     whatsapp,
     setWhatsapp,
     addRental,
@@ -190,23 +192,31 @@ function Painel() {
   const [editando, setEditando] = useState<Tent | null>(null);
   const [novoPedido, setNovoPedido] = useState(false);
 
-
   const totalEstoque = tents.reduce((s, t) => s + t.estoque, 0);
-  const alugadas = rentals.reduce(
-    (s, r) => s + r.itens.reduce((x, i) => x + i.quantidade, 0),
-    0,
-  );
-  const faturamentoRealizado = rentals.filter((r) => r.pago).reduce((s, r) => s + r.total, 0);
-  const faturamentoEstimado = rentals.reduce((s, r) => s + r.total, 0);
-  const ocupadas = tents.filter((t) => t.status !== "disponivel").length;
-  const ocupacao = tents.length ? Math.round((ocupadas / tents.length) * 100) : 0;
+  const qtdItens = (situacoes: readonly string[]) =>
+    rentals
+      .filter((r) => situacoes.includes(r.situacao))
+      .reduce((s, r) => s + r.itens.reduce((x, i) => x + i.quantidade, 0), 0);
+  const alugadas = qtdItens(["confirmado"]);
+  const pendentes = rentals.filter((r) => r.situacao === "pendente").length;
+  const comprometidas = qtdItens(SITUACOES_OCUPANDO);
+  const ativos = rentals.filter((r) => r.situacao !== "desistencia");
+  const faturamentoRealizado = ativos.filter((r) => r.pago).reduce((s, r) => s + r.total, 0);
+  const faturamentoEstimado = ativos.reduce((s, r) => s + r.total, 0);
+  const ocupacao = totalEstoque ? Math.round((comprometidas / totalEstoque) * 100) : 0;
 
   const metrics = [
-    { label: "Tendas alugadas", valor: String(alugadas), sub: `${rentals.length} locações` },
+    { label: "Tendas alugadas", valor: String(alugadas), sub: `${ativos.length} locações ativas` },
+    {
+      label: "Pendentes de confirmação",
+      valor: String(pendentes),
+      sub: `${comprometidas} tendas separadas`,
+    },
     { label: "Faturamento realizado", valor: brl(faturamentoRealizado), sub: "pedidos pagos" },
     { label: "Faturamento estimado", valor: brl(faturamentoEstimado), sub: "incluindo pendentes" },
     { label: "Taxa de ocupação", valor: `${ocupacao}%`, sub: `${totalEstoque} itens em estoque` },
   ];
+
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
