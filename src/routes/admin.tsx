@@ -327,9 +327,10 @@ function Painel() {
                   size="icon"
                   aria-label="Remover"
                   onClick={() => {
-                    deleteTent(t.id);
+                    void deleteTent(t.id);
                     toast.success("Tenda removida.");
                   }}
+
                 >
                   <Trash2 className="text-destructive" />
                 </Button>
@@ -375,27 +376,76 @@ function Painel() {
                   </span>
                   <Badge
                     className={
-                      r.pago
-                        ? "border-0 bg-whatsapp text-whatsapp-foreground"
-                        : "border-0 bg-warning text-warning-foreground"
+                      "border-0 " +
+                      (r.situacao === "confirmado"
+                        ? "bg-primary text-primary-foreground"
+                        : r.situacao === "pendente"
+                          ? "bg-warning text-warning-foreground"
+                          : "bg-secondary text-secondary-foreground")
                     }
                   >
-                    {r.pago ? "Pago / concluído" : "Pendente"}
+                    {SITUACAO_LABEL[r.situacao]}
                   </Badge>
+                  <Badge
+                    className={
+                      r.pago
+                        ? "border-0 bg-whatsapp text-whatsapp-foreground"
+                        : "border-0 bg-muted text-muted-foreground"
+                    }
+                  >
+                    {r.pago ? "Pago / concluído" : "Pagamento pendente"}
+                  </Badge>
+
+                  {r.situacao === "pendente" && (
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        variant="hero"
+                        size="sm"
+                        onClick={() => {
+                          void setSituacao(r.id, "confirmado");
+                          toast.success("Aluguel confirmado! Tendas seguem reservadas.");
+                        }}
+                      >
+                        <ThumbsUp /> Confirmar aluguel
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          void setSituacao(r.id, "desistencia");
+                          toast.success("Desistência registrada. Tendas liberadas no estoque.");
+                        }}
+                      >
+                        <XCircle /> Desistência cliente
+                      </Button>
+                    </div>
+                  )}
+
+                  {r.situacao === "desistencia" && (
+                    <Button
+                      variant="soft"
+                      size="sm"
+                      onClick={() => void setSituacao(r.id, "pendente")}
+                    >
+                      Reabrir pedido
+                    </Button>
+                  )}
+
                   <div className="flex gap-2">
-                    <Button variant="soft" size="sm" onClick={() => togglePaid(r.id)}>
-                      <CheckCircle2 /> {r.pago ? "Reabrir" : "Marcar pago"}
+                    <Button variant="soft" size="sm" onClick={() => void togglePaid(r.id)}>
+                      <CheckCircle2 /> {r.pago ? "Reabrir pagamento" : "Marcar pago"}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       aria-label="Excluir locação"
-                      onClick={() => deleteRental(r.id)}
+                      onClick={() => void deleteRental(r.id)}
                     >
                       <Trash2 className="text-destructive" />
                     </Button>
                   </div>
                 </div>
+
               </div>
             </div>
           ))}
