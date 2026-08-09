@@ -14,7 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      rentals: {
+        Row: {
+          cliente: string
+          created_at: string
+          dias: number
+          fim: string | null
+          id: string
+          inicio: string | null
+          itens: Json
+          local: string
+          pago: boolean
+          situacao: string
+          telefone: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          cliente?: string
+          created_at?: string
+          dias?: number
+          fim?: string | null
+          id?: string
+          inicio?: string | null
+          itens?: Json
+          local?: string
+          pago?: boolean
+          situacao?: string
+          telefone?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          cliente?: string
+          created_at?: string
+          dias?: number
+          fim?: string | null
+          id?: string
+          inicio?: string | null
+          itens?: Json
+          local?: string
+          pago?: boolean
+          situacao?: string
+          telefone?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          whatsapp?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      tents: {
+        Row: {
+          area: number
+          created_at: string
+          descricao: string
+          diaria: number
+          dimensoes: string
+          estoque: number
+          id: string
+          imagem: string
+          nome: string
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          area?: number
+          created_at?: string
+          descricao?: string
+          diaria?: number
+          dimensoes?: string
+          estoque?: number
+          id?: string
+          imagem?: string
+          nome?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          area?: number
+          created_at?: string
+          descricao?: string
+          diaria?: number
+          dimensoes?: string
+          estoque?: number
+          id?: string
+          imagem?: string
+          nome?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { CheckCircle2, Lock, Pencil, Plus, Trash2, TrendingUp } from "lucide-react";
+import {
+  CheckCircle2,
+  Lock,
+  Pencil,
+  Plus,
+  ThumbsUp,
+  Trash2,
+  TrendingUp,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,15 +28,18 @@ import { SiteHeader } from "@/components/SiteHeader";
 import {
   brl,
   diffDias,
+  SITUACAO_LABEL,
+  SITUACOES_OCUPANDO,
   STATUS_LABEL,
   TENT_TYPES,
   type CartItem,
-  type Rental,
+  type NewRental,
   type Tent,
   type TentStatus,
 } from "@/lib/tendas-data";
 
 import { useTendas } from "@/lib/tendas-store";
+
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -171,6 +183,8 @@ function Painel() {
     saveTent,
     togglePaid,
     deleteRental,
+    setSituacao,
+    reservadas,
     whatsapp,
     setWhatsapp,
     addRental,
@@ -178,23 +192,31 @@ function Painel() {
   const [editando, setEditando] = useState<Tent | null>(null);
   const [novoPedido, setNovoPedido] = useState(false);
 
-
   const totalEstoque = tents.reduce((s, t) => s + t.estoque, 0);
-  const alugadas = rentals.reduce(
-    (s, r) => s + r.itens.reduce((x, i) => x + i.quantidade, 0),
-    0,
-  );
-  const faturamentoRealizado = rentals.filter((r) => r.pago).reduce((s, r) => s + r.total, 0);
-  const faturamentoEstimado = rentals.reduce((s, r) => s + r.total, 0);
-  const ocupadas = tents.filter((t) => t.status !== "disponivel").length;
-  const ocupacao = tents.length ? Math.round((ocupadas / tents.length) * 100) : 0;
+  const qtdItens = (situacoes: readonly string[]) =>
+    rentals
+      .filter((r) => situacoes.includes(r.situacao))
+      .reduce((s, r) => s + r.itens.reduce((x, i) => x + i.quantidade, 0), 0);
+  const alugadas = qtdItens(["confirmado"]);
+  const pendentes = rentals.filter((r) => r.situacao === "pendente").length;
+  const comprometidas = qtdItens(SITUACOES_OCUPANDO);
+  const ativos = rentals.filter((r) => r.situacao !== "desistencia");
+  const faturamentoRealizado = ativos.filter((r) => r.pago).reduce((s, r) => s + r.total, 0);
+  const faturamentoEstimado = ativos.reduce((s, r) => s + r.total, 0);
+  const ocupacao = totalEstoque ? Math.round((comprometidas / totalEstoque) * 100) : 0;
 
   const metrics = [
-    { label: "Tendas alugadas", valor: String(alugadas), sub: `${rentals.length} locações` },
+    { label: "Tendas alugadas", valor: String(alugadas), sub: `${ativos.length} locações ativas` },
+    {
+      label: "Pendentes de confirmação",
+      valor: String(pendentes),
+      sub: `${comprometidas} tendas separadas`,
+    },
     { label: "Faturamento realizado", valor: brl(faturamentoRealizado), sub: "pedidos pagos" },
     { label: "Faturamento estimado", valor: brl(faturamentoEstimado), sub: "incluindo pendentes" },
     { label: "Taxa de ocupação", valor: `${ocupacao}%`, sub: `${totalEstoque} itens em estoque` },
   ];
+
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -208,7 +230,7 @@ function Painel() {
         </Button>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         {metrics.map((m) => (
           <div key={m.label} className="rounded-2xl border border-border/70 bg-card p-4 shadow-card">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -234,9 +256,10 @@ function Painel() {
             variant="hero"
             onClick={() =>
               setEditando({
-                id: `t${Date.now()}`,
+                id: "",
                 nome: "",
-                tipo: "Galpão",
+                tipo: "Piramidal",
+
                 dimensoes: "",
                 area: 0,
                 diaria: 0,
@@ -267,13 +290,24 @@ function Painel() {
                 <div className="min-w-40 flex-1">
                   <p className="font-semibold">{t.nome}</p>
                   <p className="text-sm text-muted-foreground">
-                    {t.dimensoes} · {brl(t.diaria)}/dia · {t.estoque} em estoque
+                    {t.dimensoes} · {brl(t.diaria)}/dia · {t.estoque} no estoque
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="text-warning-foreground/80">{reservadas(t.id)} comprometidas</span>{" "}
+                    ·{" "}
+                    <strong className="text-foreground">
+                      {t.status === "manutencao"
+                        ? 0
+                        : Math.max(0, t.estoque - reservadas(t.id))}{" "}
+                      disponíveis
+                    </strong>
                   </p>
                 </div>
                 <Select
                   value={t.status}
-                  onValueChange={(v) => setStatus(t.id, v as TentStatus)}
+                  onValueChange={(v) => void setStatus(t.id, v as TentStatus)}
                 >
+
                   <SelectTrigger className="w-44">
                     <SelectValue />
                   </SelectTrigger>
@@ -293,9 +327,10 @@ function Painel() {
                   size="icon"
                   aria-label="Remover"
                   onClick={() => {
-                    deleteTent(t.id);
+                    void deleteTent(t.id);
                     toast.success("Tenda removida.");
                   }}
+
                 >
                   <Trash2 className="text-destructive" />
                 </Button>
@@ -341,27 +376,76 @@ function Painel() {
                   </span>
                   <Badge
                     className={
-                      r.pago
-                        ? "border-0 bg-whatsapp text-whatsapp-foreground"
-                        : "border-0 bg-warning text-warning-foreground"
+                      "border-0 " +
+                      (r.situacao === "confirmado"
+                        ? "bg-primary text-primary-foreground"
+                        : r.situacao === "pendente"
+                          ? "bg-warning text-warning-foreground"
+                          : "bg-secondary text-secondary-foreground")
                     }
                   >
-                    {r.pago ? "Pago / concluído" : "Pendente"}
+                    {SITUACAO_LABEL[r.situacao]}
                   </Badge>
+                  <Badge
+                    className={
+                      r.pago
+                        ? "border-0 bg-whatsapp text-whatsapp-foreground"
+                        : "border-0 bg-muted text-muted-foreground"
+                    }
+                  >
+                    {r.pago ? "Pago / concluído" : "Pagamento pendente"}
+                  </Badge>
+
+                  {r.situacao === "pendente" && (
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        variant="hero"
+                        size="sm"
+                        onClick={() => {
+                          void setSituacao(r.id, "confirmado");
+                          toast.success("Aluguel confirmado! Tendas seguem reservadas.");
+                        }}
+                      >
+                        <ThumbsUp /> Confirmar aluguel
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          void setSituacao(r.id, "desistencia");
+                          toast.success("Desistência registrada. Tendas liberadas no estoque.");
+                        }}
+                      >
+                        <XCircle /> Desistência cliente
+                      </Button>
+                    </div>
+                  )}
+
+                  {r.situacao === "desistencia" && (
+                    <Button
+                      variant="soft"
+                      size="sm"
+                      onClick={() => void setSituacao(r.id, "pendente")}
+                    >
+                      Reabrir pedido
+                    </Button>
+                  )}
+
                   <div className="flex gap-2">
-                    <Button variant="soft" size="sm" onClick={() => togglePaid(r.id)}>
-                      <CheckCircle2 /> {r.pago ? "Reabrir" : "Marcar pago"}
+                    <Button variant="soft" size="sm" onClick={() => void togglePaid(r.id)}>
+                      <CheckCircle2 /> {r.pago ? "Reabrir pagamento" : "Marcar pago"}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       aria-label="Excluir locação"
-                      onClick={() => deleteRental(r.id)}
+                      onClick={() => void deleteRental(r.id)}
                     >
                       <Trash2 className="text-destructive" />
                     </Button>
                   </div>
                 </div>
+
               </div>
             </div>
           ))}
@@ -390,7 +474,7 @@ function Painel() {
         tent={editando}
         onClose={() => setEditando(null)}
         onSave={(t) => {
-          saveTent(t);
+          void saveTent(t);
           setEditando(null);
           toast.success("Tenda salva!");
         }}
@@ -401,7 +485,7 @@ function Painel() {
         tents={tents}
         onClose={() => setNovoPedido(false)}
         onSave={(r) => {
-          addRental(r);
+          void addRental(r);
           setNovoPedido(false);
           toast.success("Pedido registrado!");
         }}
@@ -421,8 +505,9 @@ function PedidoManualDialog({
   open: boolean;
   tents: Tent[];
   onClose: () => void;
-  onSave: (r: Rental) => void;
+  onSave: (r: NewRental) => void;
 }) {
+
   const [cliente, setCliente] = useState("");
   const [telefone, setTelefone] = useState("");
   const [local, setLocal] = useState("");
@@ -475,7 +560,6 @@ function PedidoManualDialog({
           onSubmit={(e) => {
             e.preventDefault();
             onSave({
-              id: `r${Date.now()}`,
               cliente: cliente.trim() || "Cliente não informado",
               telefone: telefone.trim(),
               local: local.trim(),
@@ -485,8 +569,9 @@ function PedidoManualDialog({
               itens: itensValidos,
               total,
               pago,
-              criadoEm: new Date().toISOString(),
+              situacao: "confirmado",
             });
+
             reset();
           }}
         >

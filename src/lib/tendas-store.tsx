@@ -7,82 +7,118 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { mockTents, type CartItem, type Rental, type Tent, type TentStatus } from "./tendas-data";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  SITUACOES_OCUPANDO,
+  type CartItem,
+  type NewRental,
+  type Rental,
+  type RentalSituacao,
+  type Tent,
+  type TentStatus,
+} from "./tendas-data";
 
-const KEY = "tendas-app-v1";
+const LOCAL_KEY = "tendas-app-local-v2";
 
-type Persisted = {
+type LocalState = { cart: CartItem[]; senha: string; isAdmin: boolean };
+
+const localInitial: LocalState = { cart: [], senha: "tendas123", isAdmin: false };
+
+type TentRow = {
+  id: string;
+  nome: string;
+  tipo: string;
+  dimensoes: string;
+  area: number;
+  diaria: number;
+  estoque: number;
+  status: string;
+  imagem: string;
+  descricao: string;
+};
+
+type RentalRow = {
+  id: string;
+  cliente: string;
+  telefone: string;
+  local: string;
+  inicio: string | null;
+  fim: string | null;
+  dias: number;
+  itens: unknown;
+  total: number;
+  pago: boolean;
+  situacao: string;
+  created_at: string;
+};
+
+const toTent = (r: TentRow): Tent => ({
+  id: r.id,
+  nome: r.nome,
+  tipo: r.tipo,
+  dimensoes: r.dimensoes,
+  area: Number(r.area),
+  diaria: Number(r.diaria),
+  estoque: Number(r.estoque),
+  status: (r.status as TentStatus) ?? "disponivel",
+  imagem: r.imagem,
+  descricao: r.descricao,
+});
+
+const toRental = (r: RentalRow): Rental => ({
+  id: r.id,
+  cliente: r.cliente,
+  telefone: r.telefone,
+  local: r.local,
+  inicio: r.inicio ?? "",
+  fim: r.fim ?? "",
+  dias: Number(r.dias),
+  itens: Array.isArray(r.itens) ? (r.itens as CartItem[]) : [],
+  total: Number(r.total),
+  pago: r.pago,
+  situacao: (r.situacao as RentalSituacao) ?? "pendente",
+  criadoEm: r.created_at,
+});
+
+type StoreValue = LocalState & {
   tents: Tent[];
   rentals: Rental[];
-  cart: CartItem[];
   whatsapp: string;
-  senha: string;
-  isAdmin: boolean;
-};
-
-
-const initial: Persisted = {
-  tents: mockTents,
-  rentals: [
-    {
-      id: "r1",
-      cliente: "Marina Duarte",
-      telefone: "(11) 98888-1212",
-      local: "Chácara Bela Vista, Itu - SP",
-      inicio: "2026-07-10",
-      fim: "2026-07-12",
-      dias: 3,
-      itens: [{ tentId: "t1", nome: "Tenda Galpão 10x10", diaria: 850, quantidade: 1 }],
-      total: 2550,
-      pago: true,
-      criadoEm: "2026-07-01T12:00:00.000Z",
-    },
-    {
-      id: "r2",
-      cliente: "Prefeitura de Salto",
-      telefone: "(11) 97777-3434",
-      local: "Praça Central, Salto - SP",
-      inicio: "2026-08-05",
-      fim: "2026-08-07",
-      dias: 3,
-      itens: [{ tentId: "t2", nome: "Tenda Piramidal 3x3", diaria: 180, quantidade: 6 }],
-      total: 3240,
-      pago: false,
-      criadoEm: "2026-07-20T12:00:00.000Z",
-    },
-  ],
-  cart: [],
-  whatsapp: "5511999999999",
-  senha: "tendas123",
-  isAdmin: false,
-};
-
-
-type StoreValue = Persisted & {
+  carregando: boolean;
+  /** Quantidade já comprometida (pedidos pendentes + alugados) por tenda. */
+  reservadas: (tentId: string) => number;
+  /** Estoque livre agora, considerando pedidos e o carrinho atual. */
+  disponiveis: (tent: Tent) => number;
   addToCart: (tent: Tent, quantidade?: number) => void;
   removeFromCart: (tentId: string) => void;
   clearCart: () => void;
-  saveTent: (tent: Tent) => void;
-  deleteTent: (id: string) => void;
-  setStatus: (id: string, status: TentStatus) => void;
-  addRental: (rental: Rental) => void;
-  togglePaid: (id: string) => void;
-  deleteRental: (id: string) => void;
-  setWhatsapp: (n: string) => void;
+  saveTent: (tent: Tent) => Promise<void>;
+  deleteTent: (id: string) => Promise<void>;
+  setStatus: (id: string, status: TentStatus) => Promise<void>;
+  addRental: (rental: NewRental) => Promise<void>;
+  setSituacao: (id: string, situacao: RentalSituacao) => Promise<void>;
+  togglePaid: (id: string) => Promise<void>;
+  deleteRental: (id: string) => Promise<void>;
+  setWhatsapp: (n: string) => Promise<void>;
   setSenha: (s: string) => void;
   setIsAdmin: (v: boolean) => void;
+  recarregar: () => Promise<void>;
 };
-
 
 const Ctx = createContext<StoreValue | null>(null);
 
 export function TendasProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<Persisted>(initial);
+  const [local, setLocal] = useState<LocalState>(localInitial);
+  const [tents, setTents] = useState<Tent[]>([]);
+  const [rentals, setRentals] = useState<Rental[]>([]);
+  const [whatsapp, setWhatsappState] = useState("5511999999999");
+  const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setState({ ...initial, ...(JSON.parse(raw) as Persisted) });
+      const raw = localStorage.getItem(LOCAL_KEY);
+      if (raw) setLocal({ ...localInitial, ...(JSON.parse(raw) as LocalState) });
     } catch {
       /* ignore */
     }
@@ -90,25 +126,89 @@ export function TendasProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(state));
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(local));
     } catch {
       /* ignore */
     }
-  }, [state]);
+  }, [local]);
 
-  const patch = useCallback(
-    (fn: (s: Persisted) => Partial<Persisted>) => setState((s) => ({ ...s, ...fn(s) })),
+  const recarregar = useCallback(async () => {
+    const [tentRes, rentalRes, settingsRes] = await Promise.all([
+      supabase.from("tents").select("*").order("created_at", { ascending: true }),
+      supabase.from("rentals").select("*").order("created_at", { ascending: false }),
+      supabase.from("settings").select("whatsapp").eq("id", "default").maybeSingle(),
+    ]);
+
+    if (tentRes.error || rentalRes.error) {
+      toast.error("Não foi possível carregar os dados do banco.");
+      setCarregando(false);
+      return;
+    }
+
+    setTents((tentRes.data as TentRow[]).map(toTent));
+    setRentals((rentalRes.data as RentalRow[]).map(toRental));
+    if (settingsRes.data?.whatsapp) setWhatsappState(settingsRes.data.whatsapp);
+    setCarregando(false);
+  }, []);
+
+  useEffect(() => {
+    void recarregar();
+  }, [recarregar]);
+
+  // Realtime: mantém painel e catálogo sincronizados
+  useEffect(() => {
+    const channel = supabase
+      .channel("tendas-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tents" }, () => {
+        void recarregar();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "rentals" }, () => {
+        void recarregar();
+      })
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [recarregar]);
+
+  const reservadasMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const r of rentals) {
+      if (!SITUACOES_OCUPANDO.includes(r.situacao)) continue;
+      for (const i of r.itens) map[i.tentId] = (map[i.tentId] ?? 0) + i.quantidade;
+    }
+    return map;
+  }, [rentals]);
+
+  const patchLocal = useCallback(
+    (fn: (s: LocalState) => Partial<LocalState>) => setLocal((s) => ({ ...s, ...fn(s) })),
     [],
   );
 
-  const value = useMemo<StoreValue>(
-    () => ({
-      ...state,
+  const value = useMemo<StoreValue>(() => {
+    const reservadas = (tentId: string) => reservadasMap[tentId] ?? 0;
+    const disponiveis = (tent: Tent) => {
+      if (tent.status === "manutencao") return 0;
+      const noCarrinho = local.cart.find((i) => i.tentId === tent.id)?.quantidade ?? 0;
+      return Math.max(0, tent.estoque - reservadas(tent.id) - noCarrinho);
+    };
+
+    return {
+      ...local,
+      tents,
+      rentals,
+      whatsapp,
+      carregando,
+      reservadas,
+      disponiveis,
+
       addToCart: (tent, quantidade = 1) =>
-        patch((s) => {
+        patchLocal((s) => {
           const atual = s.cart.find((i) => i.tentId === tent.id);
-          const max = Math.max(1, tent.estoque);
-          const nova = Math.min(max, (atual?.quantidade ?? 0) + Math.max(1, quantidade));
+          const livre = Math.max(0, tent.estoque - (reservadasMap[tent.id] ?? 0));
+          const nova = Math.min(livre, (atual?.quantidade ?? 0) + Math.max(1, quantidade));
+          if (nova <= 0) return {};
           return {
             cart: atual
               ? s.cart.map((i) => (i.tentId === tent.id ? { ...i, quantidade: nova } : i))
@@ -116,41 +216,112 @@ export function TendasProvider({ children }: { children: ReactNode }) {
                   ...s.cart,
                   { tentId: tent.id, nome: tent.nome, diaria: tent.diaria, quantidade: nova },
                 ],
-            tents: s.tents.map((t) => (t.id === tent.id ? { ...t, status: "reservada" } : t)),
           };
         }),
       removeFromCart: (tentId) =>
-        patch((s) => ({
-          cart: s.cart.filter((i) => i.tentId !== tentId),
-          tents: s.tents.map((t) =>
-            t.id === tentId && t.status === "reservada" ? { ...t, status: "disponivel" } : t,
-          ),
-        })),
-      clearCart: () => patch(() => ({ cart: [] })),
-      saveTent: (tent) =>
-        patch((s) => ({
-          tents: s.tents.some((t) => t.id === tent.id)
-            ? s.tents.map((t) => (t.id === tent.id ? tent : t))
-            : [...s.tents, tent],
-        })),
-      deleteTent: (id) =>
-        patch((s) => ({
-          tents: s.tents.filter((t) => t.id !== id),
-          cart: s.cart.filter((i) => i.tentId !== id),
-        })),
-      setStatus: (id, status) =>
-        patch((s) => ({ tents: s.tents.map((t) => (t.id === id ? { ...t, status } : t)) })),
-      addRental: (rental) => patch((s) => ({ rentals: [rental, ...s.rentals] })),
-      togglePaid: (id) =>
-        patch((s) => ({ rentals: s.rentals.map((r) => (r.id === id ? { ...r, pago: !r.pago } : r)) })),
-      deleteRental: (id) => patch((s) => ({ rentals: s.rentals.filter((r) => r.id !== id) })),
-      setWhatsapp: (whatsapp) => patch(() => ({ whatsapp })),
-      setSenha: (senha) => patch(() => ({ senha })),
-      setIsAdmin: (isAdmin) => patch(() => ({ isAdmin })),
+        patchLocal((s) => ({ cart: s.cart.filter((i) => i.tentId !== tentId) })),
+      clearCart: () => patchLocal(() => ({ cart: [] })),
 
-    }),
-    [state, patch],
-  );
+      saveTent: async (tent) => {
+        const payload = {
+          nome: tent.nome,
+          tipo: tent.tipo,
+          dimensoes: tent.dimensoes,
+          area: tent.area,
+          diaria: tent.diaria,
+          estoque: tent.estoque,
+          status: tent.status,
+          imagem: tent.imagem,
+          descricao: tent.descricao,
+        };
+        const { error } = tent.id
+          ? await supabase.from("tents").update(payload).eq("id", tent.id)
+          : await supabase.from("tents").insert(payload);
+        if (error) {
+          toast.error("Erro ao salvar a tenda.");
+          return;
+        }
+        await recarregar();
+      },
+      deleteTent: async (id) => {
+        const { error } = await supabase.from("tents").delete().eq("id", id);
+        if (error) {
+          toast.error("Erro ao remover a tenda.");
+          return;
+        }
+        patchLocal((s) => ({ cart: s.cart.filter((i) => i.tentId !== id) }));
+        await recarregar();
+      },
+      setStatus: async (id, status) => {
+        const { error } = await supabase.from("tents").update({ status }).eq("id", id);
+        if (error) {
+          toast.error("Erro ao atualizar o status.");
+          return;
+        }
+        await recarregar();
+      },
+
+      addRental: async (rental) => {
+        const { error } = await supabase.from("rentals").insert({
+          cliente: rental.cliente,
+          telefone: rental.telefone,
+          local: rental.local,
+          inicio: rental.inicio || null,
+          fim: rental.fim || null,
+          dias: rental.dias,
+          itens: rental.itens,
+          total: rental.total,
+          pago: rental.pago,
+          situacao: rental.situacao,
+        });
+        if (error) {
+          toast.error("Erro ao registrar o pedido.");
+          return;
+        }
+        await recarregar();
+      },
+      setSituacao: async (id, situacao) => {
+        const { error } = await supabase.from("rentals").update({ situacao }).eq("id", id);
+        if (error) {
+          toast.error("Erro ao atualizar o pedido.");
+          return;
+        }
+        await recarregar();
+      },
+      togglePaid: async (id) => {
+        const atual = rentals.find((r) => r.id === id);
+        if (!atual) return;
+        const { error } = await supabase
+          .from("rentals")
+          .update({ pago: !atual.pago })
+          .eq("id", id);
+        if (error) {
+          toast.error("Erro ao atualizar o pagamento.");
+          return;
+        }
+        await recarregar();
+      },
+      deleteRental: async (id) => {
+        const { error } = await supabase.from("rentals").delete().eq("id", id);
+        if (error) {
+          toast.error("Erro ao excluir a locação.");
+          return;
+        }
+        await recarregar();
+      },
+
+      setWhatsapp: async (numero) => {
+        setWhatsappState(numero);
+        const { error } = await supabase
+          .from("settings")
+          .upsert({ id: "default", whatsapp: numero });
+        if (error) toast.error("Erro ao salvar o WhatsApp.");
+      },
+      setSenha: (senha) => patchLocal(() => ({ senha })),
+      setIsAdmin: (isAdmin) => patchLocal(() => ({ isAdmin })),
+      recarregar,
+    };
+  }, [local, tents, rentals, whatsapp, carregando, reservadasMap, patchLocal, recarregar]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
