@@ -21,9 +21,9 @@ import {
 
 const LOCAL_KEY = "tendas-app-local-v2";
 
-type LocalState = { cart: CartItem[]; senha: string; isAdmin: boolean };
+type LocalState = { cart: CartItem[]; isAdmin: boolean };
 
-const localInitial: LocalState = { cart: [], senha: "tendas123", isAdmin: false };
+const localInitial: LocalState = { cart: [], isAdmin: false };
 
 type TentRow = {
   id: string;
@@ -101,7 +101,6 @@ type StoreValue = LocalState & {
   togglePaid: (id: string) => Promise<void>;
   deleteRental: (id: string) => Promise<void>;
   setWhatsapp: (n: string) => Promise<void>;
-  setSenha: (s: string) => void;
   setIsAdmin: (v: boolean) => void;
   recarregar: () => Promise<void>;
 };
@@ -317,7 +316,6 @@ export function TendasProvider({ children }: { children: ReactNode }) {
           .upsert({ id: "default", whatsapp: numero });
         if (error) toast.error("Erro ao salvar o WhatsApp.");
       },
-      setSenha: (senha) => patchLocal(() => ({ senha })),
       setIsAdmin: (isAdmin) => patchLocal(() => ({ isAdmin })),
       recarregar,
     };
