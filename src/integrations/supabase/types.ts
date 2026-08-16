@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_credentials: {
+        Row: {
+          id: string
+          senha_hash: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          senha_hash: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          senha_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rentals: {
         Row: {
           cliente: string
