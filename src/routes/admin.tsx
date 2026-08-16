@@ -72,8 +72,10 @@ function AdminPage() {
 }
 
 function Login() {
-  const { setIsAdmin, senha: senhaAtual } = useTendas();
+  const { setIsAdmin } = useTendas();
+  const verificar = useServerFn(verificarSenhaAdmin);
   const [senha, setSenhaInput] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-4 px-4 py-20">
@@ -90,12 +92,18 @@ function Login() {
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
-          if (senha === senhaAtual) {
-            setIsAdmin(true);
-            toast.success("Bem-vindo ao painel!");
-          } else {
-            toast.error("Senha incorreta.");
-          }
+          setEnviando(true);
+          void verificar({ data: { senha } })
+            .then((res) => {
+              if (res.ok) {
+                setIsAdmin(true);
+                toast.success("Bem-vindo ao painel!");
+              } else {
+                toast.error("Senha incorreta.");
+              }
+            })
+            .catch(() => toast.error("Não foi possível validar a senha."))
+            .finally(() => setEnviando(false));
         }}
       >
         <div className="space-y-1.5">
@@ -108,8 +116,8 @@ function Login() {
             placeholder="••••••••"
           />
         </div>
-        <Button variant="hero" size="lg" className="w-full" type="submit">
-          Entrar
+        <Button variant="hero" size="lg" className="w-full" type="submit" disabled={enviando}>
+          {enviando ? "Verificando..." : "Entrar"}
         </Button>
       </form>
     </div>
@@ -117,20 +125,17 @@ function Login() {
 }
 
 function TrocarSenha() {
-  const { senha: senhaAtualSalva, setSenha } = useTendas();
+  const alterar = useServerFn(alterarSenhaAdmin);
   const [atual, setAtual] = useState("");
   const [nova, setNova] = useState("");
   const [confirma, setConfirma] = useState("");
+  const [salvando, setSalvando] = useState(false);
 
   return (
     <form
       className="space-y-3 rounded-2xl border border-border/70 bg-card p-4 shadow-card"
       onSubmit={(e) => {
         e.preventDefault();
-        if (atual !== senhaAtualSalva) {
-          toast.error("Senha atual incorreta.");
-          return;
-        }
         if (nova.length < 6) {
           toast.error("A nova senha deve ter ao menos 6 caracteres.");
           return;
@@ -139,14 +144,30 @@ function TrocarSenha() {
           toast.error("As senhas não coincidem.");
           return;
         }
-        setSenha(nova);
-        setAtual("");
-        setNova("");
-        setConfirma("");
-        toast.success("Senha alterada com sucesso!");
+        setSalvando(true);
+        void alterar({ data: { atual, nova } })
+          .then((res) => {
+            if (res.ok) {
+              setAtual("");
+              setNova("");
+              setConfirma("");
+              toast.success("Senha alterada! Vale para todos os dispositivos.");
+            } else if (res.motivo === "incorreta") {
+              toast.error("Senha atual incorreta.");
+            } else if (res.motivo === "curta") {
+              toast.error("A nova senha deve ter ao menos 6 caracteres.");
+            } else {
+              toast.error("Erro ao salvar a nova senha.");
+            }
+          })
+          .catch(() => toast.error("Erro ao salvar a nova senha."))
+          .finally(() => setSalvando(false));
       }}
     >
       <p className="font-semibold">Trocar senha do painel</p>
+      <p className="text-xs text-muted-foreground">
+        A senha fica salva no banco de dados e vale em qualquer dispositivo.
+      </p>
       {(
         [
           ["atual", "Senha atual", atual, setAtual],
@@ -165,8 +186,8 @@ function TrocarSenha() {
           />
         </div>
       ))}
-      <Button variant="hero" className="w-full" type="submit">
-        Salvar nova senha
+      <Button variant="hero" className="w-full" type="submit" disabled={salvando}>
+        {salvando ? "Salvando..." : "Salvar nova senha"}
       </Button>
     </form>
   );
