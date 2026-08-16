@@ -151,7 +151,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      alterar_senha_admin: {
+        Args: {
+          senha_atual_hash_input: string
+          senha_nova_hash_input: string
+        }
+        Returns: string
+      }
+      verificar_senha_admin: {
+        Args: {
+          senha_hash_input: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

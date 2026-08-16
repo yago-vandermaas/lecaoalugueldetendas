@@ -100,6 +100,8 @@ function Login() {
               if (res.ok) {
                 setIsAdmin(true);
                 toast.success("Bem-vindo ao painel!");
+              } else if ("motivo" in res && res.motivo === "erro") {
+                toast.error("Não foi possível validar a senha.");
               } else {
                 toast.error("Senha incorreta.");
               }
