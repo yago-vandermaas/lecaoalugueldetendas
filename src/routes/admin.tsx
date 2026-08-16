@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { alterarSenhaAdmin, verificarSenhaAdmin } from "@/lib/admin-auth.functions";
 import {
   CheckCircle2,
   Lock,
