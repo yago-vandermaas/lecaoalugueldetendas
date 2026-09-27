@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { obterChavePush, registrarAparelho } from "@/lib/push.functions";
 import { useTendas } from "@/lib/tendas-store";
 import type { Rental } from "@/lib/tendas-data";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 
 /** ISO -> valor de <input type="datetime-local"> no horário de Brasília */
 const paraInput = (iso?: string | null) => {
@@ -120,9 +121,12 @@ export function LembretesLocacao({ rental }: { rental: Rental }) {
     setDia(paraInput(rental.lembreteDia));
   }, [rental.lembreteVespera, rental.lembreteDia]);
 
-  const atualizar = async (campos: Record<string, unknown>, msg: string) => {
+  const atualizar = async (campos: TablesUpdate<"rentals">, msg: string) => {
     const { error } = await supabase.from("rentals").update(campos).eq("id", rental.id);
-    if (error) return toast.error("Erro ao salvar.");
+    if (error) {
+      toast.error("Erro ao salvar.");
+      return;
+    }
     toast.success(msg);
     await recarregar();
   };
