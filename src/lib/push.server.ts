@@ -24,7 +24,9 @@ async function sendPush(endpoint: string): Promise<number> {
     exp: Math.floor(Date.now() / 1000) + 12 * 3600,
     sub: "mailto:contato@lecao-tendas.app",
   })}`;
-  const sig = p256.sign(new TextEncoder().encode(unsigned), sk).toBytes("compact");
+  const raw = p256.sign(new TextEncoder().encode(unsigned), sk) as unknown;
+  const sig =
+    raw instanceof Uint8Array ? raw : (raw as { toBytes: (f: string) => Uint8Array }).toBytes("compact");
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {

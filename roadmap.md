@@ -1,2 +1,2 @@
 # Roadmap
-- [ ] Notificações push de montagem (sem Firebase: Web Push nativo + Supabase)
+- [x] Notificações push de montagem (sem Firebase: Web Push nativo + Supabase)
