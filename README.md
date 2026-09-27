@@ -56,18 +56,6 @@ Validação dos campos do formulário antes de enviar o pedido (Nome, Telefone, 
 
 Incluir dados de exemplo (mock data) com 3 a 4 modelos de tendas reais para visualização inicial do projeto.
 
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://lecaoalugueldetendas.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/b725e7dc-ce1d-4d0a-8982-1e6cd8f2c27d).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
 ## Development
 
 Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
