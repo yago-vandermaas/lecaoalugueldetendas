@@ -32,6 +32,24 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+        }
+        Relationships: []
+      }
       rentals: {
         Row: {
           cliente: string
@@ -41,12 +59,17 @@ export type Database = {
           id: string
           inicio: string | null
           itens: Json
+          lembrete_dia_em: string | null
+          lembrete_vespera_em: string | null
           local: string
+          montada: boolean
           pago: boolean
           situacao: string
           telefone: string
           total: number
+          ultimo_aviso_em: string | null
           updated_at: string
+          vespera_enviado: boolean
         }
         Insert: {
           cliente?: string
@@ -56,12 +79,17 @@ export type Database = {
           id?: string
           inicio?: string | null
           itens?: Json
+          lembrete_dia_em?: string | null
+          lembrete_vespera_em?: string | null
           local?: string
+          montada?: boolean
           pago?: boolean
           situacao?: string
           telefone?: string
           total?: number
+          ultimo_aviso_em?: string | null
           updated_at?: string
+          vespera_enviado?: boolean
         }
         Update: {
           cliente?: string
@@ -71,12 +99,17 @@ export type Database = {
           id?: string
           inicio?: string | null
           itens?: Json
+          lembrete_dia_em?: string | null
+          lembrete_vespera_em?: string | null
           local?: string
+          montada?: boolean
           pago?: boolean
           situacao?: string
           telefone?: string
           total?: number
+          ultimo_aviso_em?: string | null
           updated_at?: string
+          vespera_enviado?: boolean
         }
         Relationships: []
       }

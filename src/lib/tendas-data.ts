@@ -36,10 +36,13 @@ export type Rental = {
   pago: boolean;
   situacao: RentalSituacao;
   criadoEm: string;
+  lembreteVespera?: string | null;
+  lembreteDia?: string | null;
+  montada?: boolean;
 };
 
 /** Novo pedido antes de existir no banco (id gerado pelo Supabase). */
-export type NewRental = Omit<Rental, "id" | "criadoEm">;
+export type NewRental = Omit<Rental, "id" | "criadoEm" | "lembreteVespera" | "lembreteDia" | "montada">;
 
 export const STATUS_LABEL: Record<TentStatus, string> = {
   disponivel: "Disponível",

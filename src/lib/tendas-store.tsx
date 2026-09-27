@@ -51,6 +51,9 @@ type RentalRow = {
   pago: boolean;
   situacao: string;
   created_at: string;
+  lembrete_vespera_em?: string | null;
+  lembrete_dia_em?: string | null;
+  montada?: boolean;
 };
 
 const toTent = (r: TentRow): Tent => ({
@@ -79,6 +82,9 @@ const toRental = (r: RentalRow): Rental => ({
   pago: r.pago,
   situacao: (r.situacao as RentalSituacao) ?? "pendente",
   criadoEm: r.created_at,
+  lembreteVespera: r.lembrete_vespera_em ?? null,
+  lembreteDia: r.lembrete_dia_em ?? null,
+  montada: r.montada ?? false,
 });
 
 type StoreValue = LocalState & {
