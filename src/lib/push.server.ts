@@ -1,11 +1,15 @@
 import { p256 } from "@noble/curves/nist.js";
 
 const b64url = (bytes: Uint8Array) =>
-  btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 
 async function getVapid() {
-  const seed = process.env["VAPID_SEED"];
-  if (!seed) throw new Error("VAPID_SEED não configurado");
+  // Keep the VAPID identity stable without requiring an extra secret in connected deployments.
+  const seed = process.env["VAPID_SEED"] || process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  if (!seed) throw new Error("VAPID_SEED ou SUPABASE_SERVICE_ROLE_KEY não configurado");
   const sk = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed)));
   const pk = p256.getPublicKey(sk, false);
   return { sk, publicKey: b64url(pk) };
@@ -26,7 +30,9 @@ async function sendPush(endpoint: string): Promise<number> {
   })}`;
   const raw = p256.sign(new TextEncoder().encode(unsigned), sk) as unknown;
   const sig =
-    raw instanceof Uint8Array ? raw : (raw as { toBytes: (f: string) => Uint8Array }).toBytes("compact");
+    raw instanceof Uint8Array
+      ? raw
+      : (raw as { toBytes: (f: string) => Uint8Array }).toBytes("compact");
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -47,7 +53,9 @@ export async function processarLembretes() {
 
   const { data: locacoes, error } = await supabaseAdmin
     .from("rentals")
-    .select("id, inicio, fim, lembrete_vespera_em, lembrete_dia_em, vespera_enviado, ultimo_aviso_em")
+    .select(
+      "id, inicio, fim, lembrete_vespera_em, lembrete_dia_em, vespera_enviado, ultimo_aviso_em",
+    )
     .eq("situacao", "confirmado")
     .eq("montada", false);
   if (error) throw error;

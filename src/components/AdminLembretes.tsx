@@ -25,6 +25,21 @@ const b64ToBytes = (b64: string) => {
   return Uint8Array.from(s, (c) => c.charCodeAt(0));
 };
 
+const mensagemErroPush = (error: unknown) => {
+  if (error instanceof DOMException) {
+    if (error.name === "NotAllowedError") {
+      return "O navegador bloqueou as notificações. Libere a permissão nas configurações do navegador.";
+    }
+    if (error.name === "SecurityError") {
+      return "Notificações só funcionam no site publicado e protegido por HTTPS.";
+    }
+    if (error.name === "InvalidStateError") {
+      return "O navegador ainda não concluiu a ativação. Feche e abra o site e tente novamente.";
+    }
+  }
+  return "Não foi possível ativar as notificações neste navegador.";
+};
+
 export function AtivarNotificacoes() {
   const chave = useServerFn(obterChavePush);
   const registrar = useServerFn(registrarAparelho);
@@ -41,8 +56,18 @@ export function AtivarNotificacoes() {
   }, []);
 
   const ativar = async () => {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      toast.error("Este navegador não aceita notificações. No iPhone, adicione o site à Tela de Início.");
+    if (
+      typeof Notification === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window)
+    ) {
+      toast.error(
+        "Este navegador não aceita notificações. No iPhone, adicione o site à Tela de Início.",
+      );
+      return;
+    }
+    if (!window.isSecureContext) {
+      toast.error("Notificações só funcionam no site publicado e protegido por HTTPS.");
       return;
     }
     if (window.top !== window.self) {
@@ -55,6 +80,11 @@ export function AtivarNotificacoes() {
     }
     setAtivando(true);
     try {
+      const chavePush = await chave();
+      if (!chavePush.ok) {
+        toast.error("As notificações ainda não foram configuradas no servidor.");
+        return;
+      }
       const perm = await Notification.requestPermission();
       if (perm !== "granted") {
         toast.error("Permissão negada. Libere as notificações nas configurações do navegador.");
@@ -62,22 +92,25 @@ export function AtivarNotificacoes() {
       }
       const reg = await navigator.serviceWorker.register("/sw-push.js");
       await navigator.serviceWorker.ready;
-      const pub = await chave();
       const sub =
         (await reg.pushManager.getSubscription()) ??
         (await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: b64ToBytes(pub),
+          applicationServerKey: b64ToBytes(chavePush.chave),
         }));
       const res = await registrar({ data: { senha, endpoint: sub.endpoint } });
       if (res.ok) {
         setAtivo(true);
         setSenha("");
         toast.success("Notificações ativadas neste aparelho!");
-      } else toast.error(res.motivo === "senha" ? "Senha incorreta." : "Erro ao ativar.");
+      } else if (res.motivo === "senha") {
+        toast.error("Senha incorreta.");
+      } else {
+        toast.error("As notificações ainda não foram configuradas no servidor.");
+      }
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível ativar as notificações.");
+      toast.error(mensagemErroPush(e));
     } finally {
       setAtivando(false);
     }
@@ -93,7 +126,9 @@ export function AtivarNotificacoes() {
         marcar "Tenda montada"). Ative em cada aparelho que deve receber.
       </p>
       {ativo ? (
-        <Badge className="border-0 bg-whatsapp text-whatsapp-foreground">Ativo neste aparelho</Badge>
+        <Badge className="border-0 bg-whatsapp text-whatsapp-foreground">
+          Ativo neste aparelho
+        </Badge>
       ) : (
         <>
           <Input
@@ -102,7 +137,12 @@ export function AtivarNotificacoes() {
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
           />
-          <Button variant="hero" className="w-full" disabled={ativando} onClick={() => void ativar()}>
+          <Button
+            variant="hero"
+            className="w-full"
+            disabled={ativando}
+            onClick={() => void ativar()}
+          >
             {ativando ? "Ativando..." : "Ativar notificações neste aparelho"}
           </Button>
         </>
@@ -146,7 +186,11 @@ export function LembretesLocacao({ rental }: { rental: Rental }) {
         <>
           <div className="space-y-1">
             <Label className="text-xs">Lembrete da véspera</Label>
-            <Input type="datetime-local" value={vespera} onChange={(e) => setVespera(e.target.value)} />
+            <Input
+              type="datetime-local"
+              value={vespera}
+              onChange={(e) => setVespera(e.target.value)}
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Lembrete do dia (repete a cada 2h)</Label>
@@ -181,7 +225,11 @@ export function LembretesLocacao({ rental }: { rental: Rental }) {
         </>
       )}
       {rental.montada && (
-        <Button variant="ghost" size="sm" onClick={() => void atualizar({ montada: false }, "Reaberto.")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => void atualizar({ montada: false }, "Reaberto.")}
+        >
           Desfazer montagem
         </Button>
       )}
