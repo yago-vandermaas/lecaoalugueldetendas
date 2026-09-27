@@ -41,6 +41,7 @@ import {
 } from "@/lib/tendas-data";
 
 import { useTendas } from "@/lib/tendas-store";
+import { AtivarNotificacoes, LembretesLocacao } from "@/components/AdminLembretes";
 
 
 export const Route = createFileRoute("/admin")({
@@ -456,6 +457,8 @@ function Painel() {
                     </Button>
                   )}
 
+                  {r.situacao === "confirmado" && <LembretesLocacao rental={r} />}
+
                   <div className="flex gap-2">
                     <Button variant="soft" size="sm" onClick={() => void togglePaid(r.id)}>
                       <CheckCircle2 /> {r.pago ? "Reabrir pagamento" : "Marcar pago"}
@@ -490,6 +493,7 @@ function Painel() {
             </p>
           </div>
 
+          <AtivarNotificacoes />
           <TrocarSenha />
         </TabsContent>
 
