@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Ruler, Plus, Check, Minus, Boxes } from "lucide-react";
+import { Ruler, Plus, Check, Minus, Boxes, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { brl, STATUS_LABEL, type Tent } from "@/lib/tendas-data";
+import { brl, DESCONTO_DIARIA_ADICIONAL, STATUS_LABEL, type Tent } from "@/lib/tendas-data";
 
 export function TentCard({
   tent,
@@ -22,7 +22,7 @@ export function TentCard({
   const [qtd, setQtd] = useState(1);
   const max = Math.max(1, disponiveis);
   const quantidade = Math.min(qtd, max);
-
+  const diariaComDesconto = tent.diaria * DESCONTO_DIARIA_ADICIONAL;
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elev">
@@ -46,6 +46,10 @@ export function TentCard({
           }
         >
           {STATUS_LABEL[tent.status]}
+        </Badge>
+        <Badge className="absolute right-3 top-3 gap-1 border-0 bg-primary/95 text-primary-foreground shadow-sm">
+          <Sparkles className="h-3 w-3 text-whatsapp" />
+          2ª diária com 50% de desconto!
         </Badge>
       </div>
 
@@ -81,10 +85,23 @@ export function TentCard({
           </span>
         </div>
 
+        <div className="flex items-center gap-1.5 rounded-lg border border-whatsapp/30 bg-whatsapp/10 px-2.5 py-1.5 text-xs font-medium text-foreground">
+          <Sparkles className="h-3.5 w-3.5 shrink-0 text-whatsapp" />
+          <span>
+            <strong>2ª diária com 50% de desconto!</strong> ({brl(diariaComDesconto)}/dia a partir do
+            2º dia)
+          </span>
+        </div>
+
         <div className="flex items-end justify-between gap-2 pt-1">
           <div>
-            <span className="font-display text-xl font-bold text-primary">{brl(tent.diaria)}</span>
-            <span className="text-xs text-muted-foreground"> /dia</span>
+            <div>
+              <span className="font-display text-xl font-bold text-primary">{brl(tent.diaria)}</span>
+              <span className="text-xs text-muted-foreground"> /1ª diária</span>
+            </div>
+            <p className="text-[11px] font-medium text-whatsapp">
+              2ª+ diária: {brl(diariaComDesconto)}/dia
+            </p>
           </div>
 
           <div className="flex items-center gap-2">

@@ -1,26 +1,33 @@
 import { useState } from "react";
-import { CalendarDays, MessageCircle, Trash2, Truck } from "lucide-react";
+import { CalendarDays, MessageCircle, Percent, Sparkles, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { brl, diffDias, type NewRental } from "@/lib/tendas-data";
+import {
+  brl,
+  DESCONTO_DIARIA_ADICIONAL,
+  diffDias,
+  type NewRental,
+} from "@/lib/tendas-data";
 import { useTendas } from "@/lib/tendas-store";
-import { openWhatsApp } from "@/lib/whatsapp";
-
+import { formatRentalWhatsAppMessage, openWhatsApp } from "@/lib/whatsapp";
 
 type Form = { nome: string; telefone: string; local: string; inicio: string; fim: string };
 const vazio: Form = { nome: "", telefone: "", local: "", inicio: "", fim: "" };
 
 export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { cart, removeFromCart, clearCart, whatsapp, addRental } = useTendas();
+  const { cart, removeFromCart, clearCart, whatsapp, addRental, calcularResumo, calcularSubtotal } =
+    useTendas();
   const [form, setForm] = useState<Form>(vazio);
   const [erros, setErros] = useState<Partial<Record<keyof Form, string>>>({});
 
   const dias = diffDias(form.inicio, form.fim);
-  const subtotal = cart.reduce((s, i) => s + i.diaria * i.quantidade, 0);
-  const total = subtotal * (dias || 0);
+  const resumo = calcularResumo(dias);
+  const total = resumo.total;
+  const temDesconto = dias >= 2 && resumo.descontoTotal > 0;
 
   const validar = () => {
     const e: Partial<Record<keyof Form, string>> = {};
@@ -58,29 +65,15 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
     };
     await addRental(rental);
 
-
-    const linhas = [
-      "*NOVO PEDIDO DE RESERVA — Lecão Aluguel de Tendas*",
-      "",
-      `*Cliente:* ${form.nome}`,
-      `*Telefone:* ${form.telefone}`,
-      `*Local do evento:* ${form.local}`,
-      `*Período:* ${form.inicio.split("-").reverse().join("/")} até ${form.fim
-        .split("-")
-        .reverse()
-        .join("/")} (${dias} dia${dias > 1 ? "s" : ""})`,
-      "",
-      "*Itens escolhidos:*",
-      ...cart.map(
-        (i) => `• ${i.quantidade}x ${i.nome} — ${brl(i.diaria)}/dia`,
-      ),
-      "",
-      `*Valor total estimado:* ${brl(total)}`,
-      "",
-      "_Obs.: o valor do frete/entrega é calculado à parte, conforme o local do evento._",
-    ];
-
-    const mensagem = linhas.join("\n");
+    const mensagem = formatRentalWhatsAppMessage({
+      cliente: form.nome,
+      telefone: form.telefone,
+      local: form.local,
+      inicio: form.inicio,
+      fim: form.fim,
+      dias,
+      itens: cart,
+    });
     const { url, ok } = openWhatsApp(whatsapp, mensagem);
 
     clearCart();
@@ -130,33 +123,60 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
         </SheetHeader>
 
         <div className="space-y-5 pb-8">
+          <div className="flex items-center gap-2 rounded-xl border border-whatsapp/30 bg-whatsapp/10 px-3 py-2 text-xs font-medium text-foreground">
+            <Sparkles className="h-4 w-4 shrink-0 text-whatsapp" />
+            <span>
+              <strong>Promoção ativa:</strong> 2ª diária em diante com{" "}
+              <strong className="text-whatsapp">50% OFF</strong> nas tendas!
+            </span>
+          </div>
+
           {cart.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nenhuma tenda selecionada ainda. Escolha um modelo no catálogo.
             </p>
           ) : (
             <ul className="space-y-2">
-              {cart.map((i) => (
-                <li
-                  key={i.tentId}
-                  className="flex items-center justify-between rounded-xl border border-border/70 bg-card p-3"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">{i.nome}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {i.quantidade}x · {brl(i.diaria)}/dia
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Remover ${i.nome}`}
-                    onClick={() => removeFromCart(i.tentId)}
+              {cart.map((i) => {
+                const diariaPromocional = i.diaria * DESCONTO_DIARIA_ADICIONAL;
+                const subtotalItem = dias > 0 ? calcularSubtotal(i, dias) : 0;
+                return (
+                  <li
+                    key={i.tentId}
+                    className="flex items-start justify-between gap-2 rounded-xl border border-border/70 bg-card p-3"
                   >
-                    <Trash2 className="text-destructive" />
-                  </Button>
-                </li>
-              ))}
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <p className="text-sm font-semibold">{i.nome}</p>
+                        {i.isTent !== false && (
+                          <Badge className="border-0 bg-whatsapp/15 px-1.5 py-0 text-[10px] font-semibold text-whatsapp">
+                            2ª diária 50% OFF
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {i.quantidade}x · 1ª diária: {brl(i.diaria)}/un.
+                        {i.isTent !== false && (
+                          <> · 2ª+ diária: <strong className="text-foreground">{brl(diariaPromocional)}/un.</strong></>
+                        )}
+                      </p>
+                      {dias > 0 && (
+                        <p className="text-xs font-medium text-primary">
+                          Subtotal ({dias} {dias === 1 ? "diária" : "diárias"}): {brl(subtotalItem)}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Remover ${i.nome}`}
+                      onClick={() => removeFromCart(i.tentId)}
+                    >
+                      <Trash2 className="text-destructive" />
+                    </Button>
+                  </li>
+                );
+              })}
             </ul>
           )}
 
@@ -173,15 +193,60 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
               <span className="inline-flex items-center gap-1">
                 <CalendarDays className="h-4 w-4" /> Diárias
               </span>
-              <span>{dias || "—"}</span>
+              <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                {dias || "—"}
+                {temDesconto && (
+                  <Badge className="border-0 bg-whatsapp text-whatsapp-foreground text-[10px]">
+                    2ª+ diária 50% OFF
+                  </Badge>
+                )}
+              </span>
             </div>
-            <div className="mt-1 flex items-center justify-between text-muted-foreground">
-              <span>Valor por dia</span>
-              <span>{brl(subtotal)}</span>
+
+            <div className="mt-1.5 flex items-center justify-between text-muted-foreground">
+              <span>1ª diária (integral)</span>
+              <span className="font-medium text-foreground">{brl(resumo.valorPrimeiraDiaria)}</span>
             </div>
+
+            {dias >= 2 ? (
+              <>
+                <div className="mt-1 flex items-center justify-between text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Percent className="h-3.5 w-3.5 text-whatsapp" />
+                    +{resumo.diasAdicionais}{" "}
+                    {resumo.diasAdicionais === 1 ? "diária adicional" : "diárias adicionais"} (50% OFF)
+                  </span>
+                  <span className="font-medium text-whatsapp">
+                    {brl(resumo.valorDiariasAdicionais)}
+                  </span>
+                </div>
+                <p className="mt-1.5 rounded-md bg-whatsapp/10 px-2 py-1 text-xs text-muted-foreground">
+                  1ª diária: <strong>{brl(resumo.valorPrimeiraDiaria)}</strong> + diárias adicionais
+                  com 50% OFF: <strong>{brl(resumo.valorDiariasAdicionais)}</strong>{" "}
+                  <span className="font-semibold text-whatsapp">
+                    (economia de {brl(resumo.descontoTotal)})
+                  </span>
+                </p>
+              </>
+            ) : (
+              <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                <span>A partir da 2ª diária (50% OFF)</span>
+                <span className="font-medium text-whatsapp">
+                  +{brl(resumo.valorPorDiariaAdicional)}/dia
+                </span>
+              </div>
+            )}
+
             <div className="mt-2 flex items-center justify-between border-t border-border pt-2 font-display text-lg font-bold text-primary">
               <span>Total</span>
-              <span>{brl(total)}</span>
+              <div className="flex items-baseline gap-2">
+                {temDesconto && (
+                  <span className="text-xs font-normal text-muted-foreground line-through">
+                    {brl(resumo.totalSemDesconto)}
+                  </span>
+                )}
+                <span>{brl(total)}</span>
+              </div>
             </div>
             <p className="mt-3 flex items-start gap-2 rounded-lg bg-background/70 p-2 text-xs text-muted-foreground">
               <Truck className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
@@ -200,7 +265,6 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
           <Button variant="whatsapp" size="xl" className="w-full" onClick={() => void finalizar()}>
             <MessageCircle /> Finalizar pedido no WhatsApp
           </Button>
-
         </div>
       </SheetContent>
     </Sheet>

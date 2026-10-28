@@ -10,11 +10,15 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  calcularResumoCarrinho,
+  calcularSubtotalItem,
+  calcularValorTendaPorDias,
   SITUACOES_OCUPANDO,
   type CartItem,
   type NewRental,
   type Rental,
   type RentalSituacao,
+  type ResumoCalculoCarrinho,
   type Tent,
   type TentStatus,
 } from "./tendas-data";
@@ -96,6 +100,12 @@ type StoreValue = LocalState & {
   reservadas: (tentId: string) => number;
   /** Estoque livre agora, considerando pedidos e o carrinho atual. */
   disponiveis: (tent: Tent) => number;
+  /** Calcula o valor de 1 unidade de tenda para X diárias (2ª+ diária com 50% OFF). */
+  calcularValorTenda: (precoDiaria: number, dias: number) => number;
+  /** Calcula o subtotal de um item do carrinho para X diárias. */
+  calcularSubtotal: (item: CartItem, dias: number) => number;
+  /** Calcula o resumo completo e totalizador do carrinho atual para X diárias. */
+  calcularResumo: (dias: number) => ResumoCalculoCarrinho;
   addToCart: (tent: Tent, quantidade?: number) => void;
   removeFromCart: (tentId: string) => void;
   clearCart: () => void;
@@ -207,6 +217,9 @@ export function TendasProvider({ children }: { children: ReactNode }) {
       carregando,
       reservadas,
       disponiveis,
+      calcularValorTenda: calcularValorTendaPorDias,
+      calcularSubtotal: calcularSubtotalItem,
+      calcularResumo: (dias: number) => calcularResumoCarrinho(local.cart, dias),
 
       addToCart: (tent, quantidade = 1) =>
         patchLocal((s) => {
@@ -216,10 +229,16 @@ export function TendasProvider({ children }: { children: ReactNode }) {
           if (nova <= 0) return {};
           return {
             cart: atual
-              ? s.cart.map((i) => (i.tentId === tent.id ? { ...i, quantidade: nova } : i))
+              ? s.cart.map((i) => (i.tentId === tent.id ? { ...i, quantidade: nova, isTent: true } : i))
               : [
                   ...s.cart,
-                  { tentId: tent.id, nome: tent.nome, diaria: tent.diaria, quantidade: nova },
+                  {
+                    tentId: tent.id,
+                    nome: tent.nome,
+                    diaria: tent.diaria,
+                    quantidade: nova,
+                    isTent: true,
+                  },
                 ],
           };
         }),

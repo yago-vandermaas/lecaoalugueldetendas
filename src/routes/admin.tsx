@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   brl,
+  calcularResumoCarrinho,
   diffDias,
   SITUACAO_LABEL,
   SITUACOES_OCUPANDO,
@@ -547,16 +548,22 @@ function PedidoManualDialog({
   const [totalManual, setTotalManual] = useState("");
 
   const dias = diffDias(inicio, fim);
-  const itensValidos = itens
-    .map((i) => {
+  const itensValidos: CartItem[] = itens
+    .map((i): CartItem | null => {
       const t = tents.find((x) => x.id === i.tentId);
       return t
-        ? { tentId: t.id, nome: t.nome, diaria: t.diaria, quantidade: Math.max(1, i.quantidade) }
+        ? {
+            tentId: t.id,
+            nome: t.nome,
+            diaria: t.diaria,
+            quantidade: Math.max(1, i.quantidade),
+            isTent: true,
+          }
         : null;
     })
-    .filter((i): i is CartItem => !!i);
-  const subtotal = itensValidos.reduce((s, i) => s + i.diaria * i.quantidade, 0);
-  const totalCalculado = subtotal * (dias || 1);
+    .filter((i): i is CartItem => i !== null);
+  const resumoCalculado = calcularResumoCarrinho(itensValidos, dias || 1);
+  const totalCalculado = resumoCalculado.total;
   const total = totalManual.trim() ? Number(totalManual) || 0 : totalCalculado;
 
   const reset = () => {
@@ -709,8 +716,13 @@ function PedidoManualDialog({
               onChange={(e) => setTotalManual(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Calculado: {brl(totalCalculado)} {dias ? `(${dias} dias)` : "(sem datas)"} — edite para
-              usar outro valor.
+              Calculado: {brl(totalCalculado)}{" "}
+              {dias
+                ? dias >= 2
+                  ? `(${dias} dias — 1ª integral + demais c/ 50% OFF)`
+                  : `(${dias} dia)`
+                : "(sem datas)"}{" "}
+              — edite para usar outro valor.
             </p>
           </div>
 

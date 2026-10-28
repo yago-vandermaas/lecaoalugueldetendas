@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, ShieldCheck, Truck, Clock, Star } from "lucide-react";
+import { Search, ShieldCheck, Truck, Clock, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -63,9 +63,14 @@ function Index() {
         />
         <div className="absolute inset-0 bg-primary/85" />
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:py-28">
-          <span className="inline-flex items-center gap-2 rounded-full bg-whatsapp/20 px-3 py-1 text-xs font-semibold text-whatsapp-foreground ring-1 ring-whatsapp/40">
-            <Star className="h-3.5 w-3.5" /> +1.200 eventos atendidos
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full bg-whatsapp/20 px-3 py-1 text-xs font-semibold text-whatsapp-foreground ring-1 ring-whatsapp/40">
+              <Star className="h-3.5 w-3.5" /> +1.200 eventos atendidos
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-semibold text-primary-foreground ring-1 ring-primary-foreground/30">
+              <Sparkles className="h-3.5 w-3.5 text-whatsapp" /> 2ª diária com 50% de desconto!
+            </span>
+          </div>
           <h1 className="mt-5 max-w-2xl font-display text-4xl font-extrabold leading-tight text-primary-foreground sm:text-6xl">
             Sua festa protegida com a tenda certa
           </h1>
@@ -107,11 +112,17 @@ function Index() {
       </section>
 
       <section id="catalogo" className="mx-auto max-w-6xl px-4 py-16">
-        <div className="flex flex-col gap-2">
-          <h2 className="font-display text-3xl font-bold">Catálogo de tendas</h2>
-          <p className="text-muted-foreground">
-            Escolha o modelo, informe as datas e receba o orçamento fechado no WhatsApp.
-          </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-display text-3xl font-bold">Catálogo de tendas</h2>
+            <p className="text-muted-foreground">
+              Escolha o modelo, informe as datas e receba o orçamento fechado no WhatsApp.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 self-start rounded-full border border-whatsapp/30 bg-whatsapp/10 px-3.5 py-1.5 text-xs font-semibold text-foreground sm:self-auto">
+            <Sparkles className="h-4 w-4 text-whatsapp" />
+            <span>2ª diária com 50% de desconto!</span>
+          </div>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -153,7 +164,6 @@ function Index() {
               }}
             />
           ))}
-
         </div>
 
         {filtradas.length === 0 && (
