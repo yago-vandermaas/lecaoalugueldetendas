@@ -43,7 +43,7 @@ import {
 
 import { useTendas } from "@/lib/tendas-store";
 import { AtivarNotificacoes, LembretesLocacao } from "@/components/AdminLembretes";
-
+import { AdminFuncionarios, EquipeMontagemLocacao } from "@/components/AdminFuncionarios";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -199,7 +199,6 @@ function TrocarSenha() {
   );
 }
 
-
 function Painel() {
   const {
     tents,
@@ -244,13 +243,14 @@ function Painel() {
     { label: "Taxa de ocupação", valor: `${ocupacao}%`, sub: `${totalEstoque} itens em estoque` },
   ];
 
-
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-bold">Painel de gestão</h1>
-          <p className="text-sm text-muted-foreground">Estoque, locações e faturamento.</p>
+          <p className="text-sm text-muted-foreground">
+            Estoque, locações, funcionários e faturamento.
+          </p>
         </div>
         <Button variant="outline" onClick={() => setIsAdmin(false)}>
           Sair do modo gestor
@@ -259,7 +259,10 @@ function Painel() {
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         {metrics.map((m) => (
-          <div key={m.label} className="rounded-2xl border border-border/70 bg-card p-4 shadow-card">
+          <div
+            key={m.label}
+            className="rounded-2xl border border-border/70 bg-card p-4 shadow-card"
+          >
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {m.label}
             </p>
@@ -275,6 +278,7 @@ function Painel() {
         <TabsList>
           <TabsTrigger value="estoque">Estoque</TabsTrigger>
           <TabsTrigger value="locacoes">Locações</TabsTrigger>
+          <TabsTrigger value="funcionarios">Funcionários</TabsTrigger>
           <TabsTrigger value="config">Configurações</TabsTrigger>
         </TabsList>
 
@@ -320,12 +324,12 @@ function Painel() {
                     {t.dimensoes} · {brl(t.diaria)}/dia · {t.estoque} no estoque
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    <span className="text-warning-foreground/80">{reservadas(t.id)} comprometidas</span>{" "}
+                    <span className="text-warning-foreground/80">
+                      {reservadas(t.id)} comprometidas
+                    </span>{" "}
                     ·{" "}
                     <strong className="text-foreground">
-                      {t.status === "manutencao"
-                        ? 0
-                        : Math.max(0, t.estoque - reservadas(t.id))}{" "}
+                      {t.status === "manutencao" ? 0 : Math.max(0, t.estoque - reservadas(t.id))}{" "}
                       disponíveis
                     </strong>
                   </p>
@@ -334,7 +338,6 @@ function Painel() {
                   value={t.status}
                   onValueChange={(v) => void setStatus(t.id, v as TentStatus)}
                 >
-
                   <SelectTrigger className="w-44">
                     <SelectValue />
                   </SelectTrigger>
@@ -346,7 +349,12 @@ function Painel() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="soft" size="icon" aria-label="Editar" onClick={() => setEditando(t)}>
+                <Button
+                  variant="soft"
+                  size="icon"
+                  aria-label="Editar"
+                  onClick={() => setEditando(t)}
+                >
                   <Pencil />
                 </Button>
                 <Button
@@ -357,7 +365,6 @@ function Painel() {
                     void deleteTent(t.id);
                     toast.success("Tenda removida.");
                   }}
-
                 >
                   <Trash2 className="text-destructive" />
                 </Button>
@@ -375,10 +382,7 @@ function Painel() {
           )}
 
           {rentals.map((r) => (
-            <div
-              key={r.id}
-              className="rounded-2xl border border-border/70 bg-card p-4 shadow-card"
-            >
+            <div key={r.id} className="rounded-2xl border border-border/70 bg-card p-4 shadow-card">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold">{r.cliente}</p>
@@ -459,6 +463,7 @@ function Painel() {
                   )}
 
                   {r.situacao === "confirmado" && <LembretesLocacao rental={r} />}
+                  {r.situacao !== "desistencia" && <EquipeMontagemLocacao rental={r} />}
 
                   <div className="flex gap-2">
                     <Button variant="soft" size="sm" onClick={() => void togglePaid(r.id)}>
@@ -474,10 +479,13 @@ function Painel() {
                     </Button>
                   </div>
                 </div>
-
               </div>
             </div>
           ))}
+        </TabsContent>
+
+        <TabsContent value="funcionarios" className="mt-4">
+          <AdminFuncionarios />
         </TabsContent>
 
         <TabsContent value="config" className="mt-4 max-w-md space-y-6">
@@ -497,7 +505,6 @@ function Painel() {
           <AtivarNotificacoes />
           <TrocarSenha />
         </TabsContent>
-
       </Tabs>
 
       <TentDialog
@@ -537,7 +544,6 @@ function PedidoManualDialog({
   onClose: () => void;
   onSave: (r: NewRental) => void;
 }) {
-
   const [cliente, setCliente] = useState("");
   const [telefone, setTelefone] = useState("");
   const [local, setLocal] = useState("");
@@ -745,7 +751,6 @@ function PedidoManualDialog({
   );
 }
 
-
 function TentDialog({
   tent,
   onClose,
@@ -797,7 +802,9 @@ function TentDialog({
             <div className="space-y-1.5">
               <Label>Tipo de tenda</Label>
               <Select
-                value={TENT_TYPES.includes(atual.tipo as (typeof TENT_TYPES)[number]) ? atual.tipo : ""}
+                value={
+                  TENT_TYPES.includes(atual.tipo as (typeof TENT_TYPES)[number]) ? atual.tipo : ""
+                }
                 onValueChange={(v) => setDraft({ ...atual, tipo: v })}
               >
                 <SelectTrigger>
@@ -837,8 +844,7 @@ function TentDialog({
                     return;
                   }
                   const reader = new FileReader();
-                  reader.onload = () =>
-                    setDraft({ ...atual, imagem: String(reader.result) });
+                  reader.onload = () => setDraft({ ...atual, imagem: String(reader.result) });
                   reader.readAsDataURL(file);
                 }}
               />

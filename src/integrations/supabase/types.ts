@@ -1,326 +1,413 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: "14.5";
+  };
   public: {
     Tables: {
       admin_credentials: {
         Row: {
-          id: string
-          senha_hash: string
-          updated_at: string
-        }
+          id: string;
+          senha_hash: string;
+          updated_at: string;
+        };
         Insert: {
-          id?: string
-          senha_hash: string
-          updated_at?: string
-        }
+          id?: string;
+          senha_hash: string;
+          updated_at?: string;
+        };
         Update: {
-          id?: string
-          senha_hash?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          id?: string;
+          senha_hash?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      employee_payments: {
+        Row: {
+          competencia: string;
+          created_at: string;
+          data: string | null;
+          descricao: string;
+          employee_id: string;
+          id: string;
+          itens: Json;
+          pago: boolean;
+          pago_em: string | null;
+          quantidade_tendas: number;
+          rental_id: string | null;
+          tipo: string;
+          updated_at: string;
+          valor: number;
+        };
+        Insert: {
+          competencia?: string;
+          created_at?: string;
+          data?: string | null;
+          descricao?: string;
+          employee_id: string;
+          id?: string;
+          itens?: Json;
+          pago?: boolean;
+          pago_em?: string | null;
+          quantidade_tendas?: number;
+          rental_id?: string | null;
+          tipo?: string;
+          updated_at?: string;
+          valor?: number;
+        };
+        Update: {
+          competencia?: string;
+          created_at?: string;
+          data?: string | null;
+          descricao?: string;
+          employee_id?: string;
+          id?: string;
+          itens?: Json;
+          pago?: boolean;
+          pago_em?: string | null;
+          quantidade_tendas?: number;
+          rental_id?: string | null;
+          tipo?: string;
+          updated_at?: string;
+          valor?: number;
+        };
+        Relationships: [];
+      };
+      employees: {
+        Row: {
+          ativo: boolean;
+          cargo: string;
+          created_at: string;
+          dia_pagamento: number;
+          id: string;
+          nome: string;
+          pix: string;
+          salario_mensal: number;
+          telefone: string;
+          tipo_pagamento: string;
+          updated_at: string;
+          valor_padrao_tenda: number;
+          valores_por_tenda: Json;
+        };
+        Insert: {
+          ativo?: boolean;
+          cargo?: string;
+          created_at?: string;
+          dia_pagamento?: number;
+          id?: string;
+          nome?: string;
+          pix?: string;
+          salario_mensal?: number;
+          telefone?: string;
+          tipo_pagamento?: string;
+          updated_at?: string;
+          valor_padrao_tenda?: number;
+          valores_por_tenda?: Json;
+        };
+        Update: {
+          ativo?: boolean;
+          cargo?: string;
+          created_at?: string;
+          dia_pagamento?: number;
+          id?: string;
+          nome?: string;
+          pix?: string;
+          salario_mensal?: number;
+          telefone?: string;
+          tipo_pagamento?: string;
+          updated_at?: string;
+          valor_padrao_tenda?: number;
+          valores_por_tenda?: Json;
+        };
+        Relationships: [];
+      };
       push_subscriptions: {
         Row: {
-          created_at: string
-          endpoint: string
-          id: string
-        }
+          created_at: string;
+          endpoint: string;
+          id: string;
+        };
         Insert: {
-          created_at?: string
-          endpoint: string
-          id?: string
-        }
+          created_at?: string;
+          endpoint: string;
+          id?: string;
+        };
         Update: {
-          created_at?: string
-          endpoint?: string
-          id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          endpoint?: string;
+          id?: string;
+        };
+        Relationships: [];
+      };
       rentals: {
         Row: {
-          cliente: string
-          created_at: string
-          dias: number
-          fim: string | null
-          id: string
-          inicio: string | null
-          itens: Json
-          lembrete_dia_em: string | null
-          lembrete_vespera_em: string | null
-          local: string
-          montada: boolean
-          pago: boolean
-          situacao: string
-          telefone: string
-          total: number
-          ultimo_aviso_em: string | null
-          updated_at: string
-          vespera_enviado: boolean
-        }
+          cliente: string;
+          created_at: string;
+          dias: number;
+          fim: string | null;
+          id: string;
+          inicio: string | null;
+          itens: Json;
+          lembrete_dia_em: string | null;
+          lembrete_vespera_em: string | null;
+          local: string;
+          montada: boolean;
+          pago: boolean;
+          situacao: string;
+          telefone: string;
+          total: number;
+          ultimo_aviso_em: string | null;
+          updated_at: string;
+          vespera_enviado: boolean;
+        };
         Insert: {
-          cliente?: string
-          created_at?: string
-          dias?: number
-          fim?: string | null
-          id?: string
-          inicio?: string | null
-          itens?: Json
-          lembrete_dia_em?: string | null
-          lembrete_vespera_em?: string | null
-          local?: string
-          montada?: boolean
-          pago?: boolean
-          situacao?: string
-          telefone?: string
-          total?: number
-          ultimo_aviso_em?: string | null
-          updated_at?: string
-          vespera_enviado?: boolean
-        }
+          cliente?: string;
+          created_at?: string;
+          dias?: number;
+          fim?: string | null;
+          id?: string;
+          inicio?: string | null;
+          itens?: Json;
+          lembrete_dia_em?: string | null;
+          lembrete_vespera_em?: string | null;
+          local?: string;
+          montada?: boolean;
+          pago?: boolean;
+          situacao?: string;
+          telefone?: string;
+          total?: number;
+          ultimo_aviso_em?: string | null;
+          updated_at?: string;
+          vespera_enviado?: boolean;
+        };
         Update: {
-          cliente?: string
-          created_at?: string
-          dias?: number
-          fim?: string | null
-          id?: string
-          inicio?: string | null
-          itens?: Json
-          lembrete_dia_em?: string | null
-          lembrete_vespera_em?: string | null
-          local?: string
-          montada?: boolean
-          pago?: boolean
-          situacao?: string
-          telefone?: string
-          total?: number
-          ultimo_aviso_em?: string | null
-          updated_at?: string
-          vespera_enviado?: boolean
-        }
-        Relationships: []
-      }
+          cliente?: string;
+          created_at?: string;
+          dias?: number;
+          fim?: string | null;
+          id?: string;
+          inicio?: string | null;
+          itens?: Json;
+          lembrete_dia_em?: string | null;
+          lembrete_vespera_em?: string | null;
+          local?: string;
+          montada?: boolean;
+          pago?: boolean;
+          situacao?: string;
+          telefone?: string;
+          total?: number;
+          ultimo_aviso_em?: string | null;
+          updated_at?: string;
+          vespera_enviado?: boolean;
+        };
+        Relationships: [];
+      };
       settings: {
         Row: {
-          created_at: string
-          id: string
-          updated_at: string
-          whatsapp: string
-        }
+          created_at: string;
+          id: string;
+          updated_at: string;
+          whatsapp: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          updated_at?: string
-          whatsapp?: string
-        }
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+          whatsapp?: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          updated_at?: string
-          whatsapp?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+          whatsapp?: string;
+        };
+        Relationships: [];
+      };
       tents: {
         Row: {
-          area: number
-          created_at: string
-          descricao: string
-          diaria: number
-          dimensoes: string
-          estoque: number
-          id: string
-          imagem: string
-          nome: string
-          status: string
-          tipo: string
-          updated_at: string
-        }
+          area: number;
+          created_at: string;
+          descricao: string;
+          diaria: number;
+          dimensoes: string;
+          estoque: number;
+          id: string;
+          imagem: string;
+          nome: string;
+          status: string;
+          tipo: string;
+          updated_at: string;
+        };
         Insert: {
-          area?: number
-          created_at?: string
-          descricao?: string
-          diaria?: number
-          dimensoes?: string
-          estoque?: number
-          id?: string
-          imagem?: string
-          nome?: string
-          status?: string
-          tipo?: string
-          updated_at?: string
-        }
+          area?: number;
+          created_at?: string;
+          descricao?: string;
+          diaria?: number;
+          dimensoes?: string;
+          estoque?: number;
+          id?: string;
+          imagem?: string;
+          nome?: string;
+          status?: string;
+          tipo?: string;
+          updated_at?: string;
+        };
         Update: {
-          area?: number
-          created_at?: string
-          descricao?: string
-          diaria?: number
-          dimensoes?: string
-          estoque?: number
-          id?: string
-          imagem?: string
-          nome?: string
-          status?: string
-          tipo?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-    }
+          area?: number;
+          created_at?: string;
+          descricao?: string;
+          diaria?: number;
+          dimensoes?: string;
+          estoque?: number;
+          id?: string;
+          imagem?: string;
+          nome?: string;
+          status?: string;
+          tipo?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
       alterar_senha_admin: {
-        Args: { senha_atual_hash_input: string; senha_nova_hash_input: string }
-        Returns: string
-      }
+        Args: { senha_atual_hash_input: string; senha_nova_hash_input: string };
+        Returns: string;
+      };
       verificar_senha_admin: {
-        Args: { senha_hash_input: string }
-        Returns: boolean
-      }
-    }
+        Args: { senha_hash_input: string };
+        Returns: boolean;
+      };
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
     Enums: {},
   },
-} as const
+} as const;

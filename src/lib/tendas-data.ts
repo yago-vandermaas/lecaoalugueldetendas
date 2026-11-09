@@ -47,7 +47,10 @@ export type Rental = {
 };
 
 /** Novo pedido antes de existir no banco (id gerado pelo Supabase). */
-export type NewRental = Omit<Rental, "id" | "criadoEm" | "lembreteVespera" | "lembreteDia" | "montada">;
+export type NewRental = Omit<
+  Rental,
+  "id" | "criadoEm" | "lembreteVespera" | "lembreteDia" | "montada"
+>;
 
 export const STATUS_LABEL: Record<TentStatus, string> = {
   disponivel: "Disponível",
@@ -130,10 +133,7 @@ export type ResumoCalculoCarrinho = {
  * Calcula o resumo detalhado do carrinho com discriminação da 1ª diária,
  * diárias adicionais com 50% OFF e economia total.
  */
-export const calcularResumoCarrinho = (
-  itens: CartItem[],
-  dias: number,
-): ResumoCalculoCarrinho => {
+export const calcularResumoCarrinho = (itens: CartItem[], dias: number): ResumoCalculoCarrinho => {
   const diasValidos = Math.max(0, dias);
   const diasAdicionais = Math.max(0, diasValidos - 1);
 
@@ -144,8 +144,7 @@ export const calcularResumoCarrinho = (
     return acc + item.diaria * fator * item.quantidade;
   }, 0);
 
-  const valorDiariasAdicionais =
-    diasAdicionais > 0 ? diasAdicionais * valorPorDiariaAdicional : 0;
+  const valorDiariasAdicionais = diasAdicionais > 0 ? diasAdicionais * valorPorDiariaAdicional : 0;
 
   const totalSemDesconto = diasValidos > 0 ? valorPrimeiraDiaria * diasValidos : 0;
   const total =
@@ -164,4 +163,105 @@ export const calcularResumoCarrinho = (
     descontoTotal,
     total,
   };
+};
+
+export type EmployeePaymentType = "mensal" | "por_tenda";
+
+export const EMPLOYEE_PAYMENT_TYPE_LABEL: Record<EmployeePaymentType, string> = {
+  mensal: "Pagamento mensal (fixo)",
+  por_tenda: "Por tenda montada",
+};
+
+export type Employee = {
+  id: string;
+  nome: string;
+  telefone: string;
+  cargo: string;
+  pix: string;
+  tipoPagamento: EmployeePaymentType;
+  /** Salário fixo mensal em R$ (usado quando tipoPagamento === "mensal") */
+  salarioMensal: number;
+  /** Dia de vencimento do salário mensal (1 a 31) */
+  diaPagamento: number;
+  /** Mapa tentId -> valor (R$) pago por unidade montada daquele modelo/tamanho (usado quando tipoPagamento === "por_tenda") */
+  valoresPorTenda: Record<string, number>;
+  /** Valor padrão por tenda caso um modelo não tenha valor específico configurado */
+  valorPadraoTenda: number;
+  ativo: boolean;
+  criadoEm: string;
+};
+
+export type NewEmployee = Omit<Employee, "id" | "criadoEm">;
+
+export type AssemblyItem = {
+  tentId: string;
+  nome: string;
+  dimensoes?: string | undefined;
+  quantidade: number;
+  valorUnitario: number;
+};
+
+export type EmployeePaymentRecord = {
+  id: string;
+  employeeId: string;
+  tipo: "mensal" | "montagem";
+  /** Competência no formato YYYY-MM (ex: "2026-11") */
+  competencia: string;
+  /** Data do evento/montagem ou data de referência (YYYY-MM-DD) */
+  data: string;
+  /** Se vinculado a uma locação existente */
+  rentalId?: string | null | undefined;
+  /** Descrição ou identificação (ex: nome do cliente / local ou descrição avulsa) */
+  descricao: string;
+  /** Itens de tendas montadas (quando tipo === "montagem") */
+  itens: AssemblyItem[];
+  /** Quantidade total de tendas montadas neste registro */
+  quantidadeTendas: number;
+  /** Valor total a receber neste registro (R$) */
+  valor: number;
+  /** Indica se já foi pago ao funcionário */
+  pago: boolean;
+  /** Data em que o pagamento foi efetivado (ISO ou YYYY-MM-DD) */
+  pagoEm?: string | null | undefined;
+  criadoEm: string;
+};
+
+export type NewEmployeePaymentRecord = Omit<EmployeePaymentRecord, "id" | "criadoEm">;
+
+/**
+ * Calcula os itens e o valor total de montagem para um funcionário (modalidade "por_tenda")
+ * com base nos itens de uma locação ou seleção de tendas.
+ */
+export const calcularMontagemFuncionario = (
+  employee: Pick<Employee, "valoresPorTenda" | "valorPadraoTenda">,
+  itens: { tentId: string; nome?: string; quantidade: number }[],
+  tents: Tent[],
+): { itens: AssemblyItem[]; quantidadeTendas: number; valorTotal: number } => {
+  const assemblyItens: AssemblyItem[] = itens
+    .filter((i) => i.quantidade > 0)
+    .map((item) => {
+      const tent =
+        tents.find((t) => t.id === item.tentId) ??
+        tents.find((t) => item.nome && t.nome.toLowerCase() === item.nome.toLowerCase());
+      const valorDireto = employee.valoresPorTenda?.[item.tentId];
+      const valorPorTentEncontrada = tent ? employee.valoresPorTenda?.[tent.id] : undefined;
+      const valorUnitario =
+        typeof valorDireto === "number" && !Number.isNaN(valorDireto)
+          ? valorDireto
+          : typeof valorPorTentEncontrada === "number" && !Number.isNaN(valorPorTentEncontrada)
+            ? valorPorTentEncontrada
+            : employee.valorPadraoTenda || 0;
+      return {
+        tentId: item.tentId || tent?.id || "",
+        nome: item.nome || tent?.nome || "Tenda",
+        dimensoes: tent?.dimensoes,
+        quantidade: item.quantidade,
+        valorUnitario,
+      };
+    });
+
+  const quantidadeTendas = assemblyItens.reduce((acc, i) => acc + i.quantidade, 0);
+  const valorTotal = assemblyItens.reduce((acc, i) => acc + i.quantidade * i.valorUnitario, 0);
+
+  return { itens: assemblyItens, quantidadeTendas, valorTotal };
 };
