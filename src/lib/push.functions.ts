@@ -12,7 +12,7 @@ export const obterChavePush = createServerFn({ method: "GET" }).handler(async ()
 });
 
 export const registrarAparelho = createServerFn({ method: "POST" })
-  .inputValidator((d) =>
+  .validator((d: unknown) =>
     z.object({ senha: z.string().min(1).max(200), endpoint: z.string().url().max(2000) }).parse(d),
   )
   .handler(async ({ data }) => {

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 export const verificarSenhaAdmin = createServerFn({ method: "POST" })
-  .inputValidator((data: { senha: string }) => data)
+  .validator((data: { senha: string }) => data)
   .handler(async ({ data }) => {
     try {
       const { verificarSenhaAdminServer } = await import("./admin-auth.server");
@@ -13,7 +13,7 @@ export const verificarSenhaAdmin = createServerFn({ method: "POST" })
   });
 
 export const alterarSenhaAdmin = createServerFn({ method: "POST" })
-  .inputValidator((data: { atual: string; nova: string }) => data)
+  .validator((data: { atual: string; nova: string }) => data)
   .handler(async ({ data }) => {
     try {
       const { alterarSenhaAdminServer } = await import("./admin-auth.server");
